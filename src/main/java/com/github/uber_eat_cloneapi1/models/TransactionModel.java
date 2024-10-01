@@ -7,24 +7,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.awt.*;
-import java.util.ArrayList;
+import java.time.ZonedDateTime;
+
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table
+@Table(name = "stores")
 @Entity
-public class RestaurantModel {
+public class TransactionModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
-    private String name;
-    private String cuisine;
-    private double rating;
-    private String address;
-    private boolean isOpen;
-
-    private List<MenuModel> menus = new ArrayList<>();
+    private String d;
+    private OrderModel order;
+    private PaymentModel payment;
+    private ZonedDateTime transactionDate;
+    private String status;
 }

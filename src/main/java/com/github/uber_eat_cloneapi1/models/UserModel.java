@@ -24,12 +24,10 @@ public class UserModel {
     private String password;
     private String firstname;
     private String lastname;
-    private String phone;
-    private String address;
-    private String city;
-    private String state;
-    private String country;
-    private String zip;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", referencedColumnName = "id")
+    private AddressModel address;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(

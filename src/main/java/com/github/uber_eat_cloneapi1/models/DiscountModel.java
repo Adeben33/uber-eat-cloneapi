@@ -7,24 +7,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.awt.*;
-import java.util.ArrayList;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table
+@Table(name = "stores")
 @Entity
-public class RestaurantModel {
+public class DiscountModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
-    private String name;
-    private String cuisine;
-    private double rating;
-    private String address;
-    private boolean isOpen;
-
-    private List<MenuModel> menus = new ArrayList<>();
+    private String description;
+    private double discountAmount;
+    private boolean isPercentage; // True if discount is percentage-based
+    private boolean isActive;
 }

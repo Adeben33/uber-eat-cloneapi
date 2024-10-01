@@ -1,30 +1,24 @@
 package com.github.uber_eat_cloneapi1.models;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.awt.*;
-import java.util.ArrayList;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table
+@Table(name = "stores")
 @Entity
-public class RestaurantModel {
+public class DriverModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
     private String name;
-    private String cuisine;
+    private String phone;
+    private String vehicleDetails;
+    private boolean isAvailable;
     private double rating;
-    private String address;
-    private boolean isOpen;
-
-    private List<MenuModel> menus = new ArrayList<>();
 }
