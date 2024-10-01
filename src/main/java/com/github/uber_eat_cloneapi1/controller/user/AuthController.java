@@ -1,16 +1,15 @@
 package com.github.uber_eat_cloneapi1.controller.user;
 
-import com.github.uber_eat_cloneapi1.dto.requests.LoginDTO;
+import com.github.uber_eat_cloneapi1.dto.request.LoginDTO;
 import com.github.uber_eat_cloneapi1.models.RoleModel;
 import com.github.uber_eat_cloneapi1.models.UserModel;
-import com.github.uber_eat_cloneapi1.dto.requests.RegisterDTO;
+import com.github.uber_eat_cloneapi1.dto.request.RegisterDTO;
 import com.github.uber_eat_cloneapi1.repository.RoleRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
 import com.github.uber_eat_cloneapi1.security.JwtGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

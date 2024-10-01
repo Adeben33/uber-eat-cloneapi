@@ -1,9 +1,9 @@
-package com.github.uber_eat_cloneapi1.dto.requests;
+package com.github.uber_eat_cloneapi1.dto.request;
 
 import lombok.Data;
 
 @Data
-public class RegisterDTO {
+public class LoginDTO {
     private String email;
     private String password;
 }

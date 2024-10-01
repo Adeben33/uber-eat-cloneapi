@@ -1,4 +1,4 @@
-package com.github.uber_eat_cloneapi1.driver;
+package com.github.uber_eat_cloneapi1.controller.driver;
 
 import org.springframework.web.bind.annotation.*;
 
