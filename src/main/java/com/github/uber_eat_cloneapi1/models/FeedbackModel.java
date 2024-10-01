@@ -13,17 +13,29 @@ import java.time.ZonedDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "feedbacks")
 @Entity
 public class FeedbackModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserModel user;
+
+    @OneToOne
+    @JoinColumn(name = "driver_id", referencedColumnName = "id")
     private DriverModel driver;
-    private OrderModel order;
+
+//    @OneToOne
+//    @JoinColumn(name = "order_id", referencedColumnName = "id")
+//    private OrderModel order;
+
     private String comment;
+
     private int rating; // Scale of 1-5
+
     private ZonedDateTime feedbackDate;
 
 }

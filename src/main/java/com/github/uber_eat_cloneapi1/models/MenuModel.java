@@ -5,12 +5,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.ZonedDateTime;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "menus")
 @Entity
 public class MenuModel {
 
@@ -21,4 +25,10 @@ public class MenuModel {
     private String description;
     private double price;
     private String imageUrl;
+
+    @CreationTimestamp
+    private ZonedDateTime createdAt;
+
+    @UpdateTimestamp
+    private ZonedDateTime updatedAt;
 }

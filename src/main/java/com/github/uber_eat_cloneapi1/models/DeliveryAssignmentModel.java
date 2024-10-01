@@ -15,16 +15,16 @@ import java.time.ZonedDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "deliveryassignments")
 @Entity
 public class DeliveryAssignmentModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String assignmentId;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "order_id", referencedColumnName = "id")
-    private Order order;
+//    @OneToOne(cascade = CascadeType.ALL)
+//    @JoinColumn(name = "order_id", referencedColumnName = "id")
+//    private OrderModel order;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "driver_id", referencedColumnName = "id")

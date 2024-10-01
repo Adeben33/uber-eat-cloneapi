@@ -7,11 +7,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "payments")
 @Entity
 public class PaymentModel {
     @Id
@@ -19,5 +22,8 @@ public class PaymentModel {
     private Long id;
     private String paymentMethod;
     private double amount;
-    private OrderModel order;
+
+//    @OneToMany
+//    @JoinColumn(name="orders_id", nullable=false, referencedColumnName = "id")
+//    private List<OrderModel> orders = new ArrayList<>();
 }

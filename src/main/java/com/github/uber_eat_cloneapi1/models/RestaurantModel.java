@@ -9,12 +9,13 @@ import lombok.NoArgsConstructor;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table
+@Table(name="restaurants")
 @Entity
 public class RestaurantModel {
     @Id
@@ -26,5 +27,7 @@ public class RestaurantModel {
     private String address;
     private boolean isOpen;
 
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "menus_id",referencedColumnName = "id")
     private List<MenuModel> menus = new ArrayList<>();
 }

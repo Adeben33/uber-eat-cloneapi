@@ -12,15 +12,23 @@ import java.time.ZonedDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "reviews")
 @Entity
 public class ReviewModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false,referencedColumnName = "id")
     private UserModel user;
+
+    @OneToOne
+    @JoinColumn(name = "restaurant_id", nullable = false,referencedColumnName = "id")
     private RestaurantModel restaurant;
+
     private int rating;
     private String comment;
     private ZonedDateTime reviewDate;
+
 }

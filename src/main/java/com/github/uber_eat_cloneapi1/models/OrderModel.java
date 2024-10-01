@@ -5,34 +5,37 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.awt.*;
 import java.time.ZonedDateTime;
-import java.util.List;
+
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "orders")
 @Entity
 public class OrderModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private UserModel user;
 
-    @OneToMany
-    @JoinColumn(name="restaurant_id", nullable=false)
-    private List<RestaurantModel> restaurant;
+//    @OneToOne(cascade = CascadeType.ALL)
+//    @JoinColumn(name = "user_id", referencedColumnName = "id")
+//    private UserModel user;
 
-    @OneToMany
-    @JoinColumn(name="items_id", nullable=false)
-    private List<MenuModel> items;
+//    @ManyToOne
+//    @JoinColumn(name="restaurant_id", nullable=false)
+//    private RestaurantModel restaurants;
+//
+//    @OneToMany(cascade = CascadeType.ALL)
+//    @JoinColumn(name="item_id", referencedColumnName = "id")
+//    private List<MenuModel> items;
+
+//    @ManyToOne
+//    @JoinColumn(name = "transaction_id", nullable = false)
+//    private TransactionModel transaction;
 
     private double totalPrice;
 

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "drivers")
 @Entity
 public class DriverModel {
     @Id
@@ -21,4 +21,5 @@ public class DriverModel {
     private String vehicleDetails;
     private boolean isAvailable;
     private double rating;
+
 }

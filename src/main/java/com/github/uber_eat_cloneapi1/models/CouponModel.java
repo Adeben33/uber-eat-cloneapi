@@ -1,7 +1,6 @@
 package com.github.uber_eat_cloneapi1.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,9 +14,11 @@ import java.time.ZonedDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "coupons")
 @Entity
 public class CouponModel {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String code;
     private String description;

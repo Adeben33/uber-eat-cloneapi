@@ -16,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "roles")
 public class RoleModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

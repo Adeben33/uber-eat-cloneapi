@@ -15,7 +15,7 @@ import java.time.ZonedDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "addresses")
 @Entity
 public class AddressModel {
     @Id

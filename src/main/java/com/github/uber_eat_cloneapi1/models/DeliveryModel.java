@@ -7,18 +7,24 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "deliveries")
 @Entity
 public class DeliveryModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
-    private Order order;
+
+//    @OneToMany
+//    @JoinColumn(name="orders_id", nullable=false, referencedColumnName = "id")
+//    private List<OrderModel> orders = new ArrayList<>();
+
     private String deliveryPersonName;
     private String deliveryPersonPhone;
     private String status;

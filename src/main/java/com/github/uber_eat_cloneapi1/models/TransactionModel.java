@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Data
@@ -20,8 +22,14 @@ public class TransactionModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String d;
-    private OrderModel order;
+
+//    @OneToMany(mappedBy = "transaction")
+//    private List<OrderModel> orders = new ArrayList<>();
+
+    @OneToOne
+    @JoinColumn(name = "payment_id", nullable = false,referencedColumnName = "id")
     private PaymentModel payment;
+
     private ZonedDateTime transactionDate;
     private String status;
 }

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.ZonedDateTime;
 
@@ -13,7 +14,7 @@ import java.time.ZonedDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stores")
+@Table(name = "notifications")
 @Entity
 public class NotificationModel {
     @Id
@@ -22,5 +23,11 @@ public class NotificationModel {
     private String message;
     private ZonedDateTime sentAt;
     private boolean isRead;
-    private User user;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private UserModel user;
+
+    @CreationTimestamp
+    private ZonedDateTime createdAt;
 }
