@@ -17,7 +17,7 @@ import java.time.ZonedDateTime;
 public class ReviewModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false,referencedColumnName = "id")

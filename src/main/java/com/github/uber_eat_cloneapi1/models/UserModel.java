@@ -25,9 +25,9 @@ public class UserModel {
     private String firstname;
     private String lastname;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL) // Ensure this field references AddressModel
     @JoinColumn(name = "address_id", referencedColumnName = "id")
-    private AddressModel addresses;
+    private AddressModel address;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(

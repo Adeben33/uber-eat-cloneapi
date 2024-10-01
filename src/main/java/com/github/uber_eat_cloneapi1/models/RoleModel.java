@@ -25,9 +25,6 @@ public class RoleModel {
 
     private String name;
 
-//    @ManyToMany(mappedBy = "roles")
-//    private List<UserModel> userModel;
-
     @CreationTimestamp
     private ZonedDateTime createdAt;
 

@@ -19,7 +19,7 @@ import java.time.ZonedDateTime;
 public class NotificationModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private String message;
     private ZonedDateTime sentAt;
     private boolean isRead;

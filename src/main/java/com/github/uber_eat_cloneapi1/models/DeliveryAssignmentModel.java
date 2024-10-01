@@ -20,11 +20,11 @@ import java.time.ZonedDateTime;
 public class DeliveryAssignmentModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String assignmentId;
+    private Long id;
 
-//    @OneToOne(cascade = CascadeType.ALL)
-//    @JoinColumn(name = "order_id", referencedColumnName = "id")
-//    private OrderModel order;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    private OrderModel order;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "driver_id", referencedColumnName = "id")

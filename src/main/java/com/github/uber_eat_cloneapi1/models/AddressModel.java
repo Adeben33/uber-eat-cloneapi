@@ -20,14 +20,15 @@ import java.time.ZonedDateTime;
 public class AddressModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private String street;
     private String city;
     private String state;
     private String country;
     private String postalCode;
     private String phone;
-    @OneToOne(cascade = CascadeType.ALL)
+
+    @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserModel user;
 

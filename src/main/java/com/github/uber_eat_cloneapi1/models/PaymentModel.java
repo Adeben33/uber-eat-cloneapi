@@ -20,10 +20,11 @@ public class PaymentModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String paymentMethod;
     private double amount;
 
-//    @OneToMany
-//    @JoinColumn(name="orders_id", nullable=false, referencedColumnName = "id")
-//    private List<OrderModel> orders = new ArrayList<>();
+    @OneToMany
+    @JoinColumn(name="order_id", nullable=false, referencedColumnName = "id")
+    private List<OrderModel> orders = new ArrayList<>();
 }

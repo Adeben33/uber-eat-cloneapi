@@ -28,9 +28,9 @@ public class FeedbackModel {
     @JoinColumn(name = "driver_id", referencedColumnName = "id")
     private DriverModel driver;
 
-//    @OneToOne
-//    @JoinColumn(name = "order_id", referencedColumnName = "id")
-//    private OrderModel order;
+    @OneToOne
+    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    private OrderModel order;
 
     private String comment;
 

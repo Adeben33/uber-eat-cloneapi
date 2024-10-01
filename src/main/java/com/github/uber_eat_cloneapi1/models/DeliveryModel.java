@@ -19,14 +19,15 @@ import java.util.List;
 public class DeliveryModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
 
-//    @OneToMany
-//    @JoinColumn(name="orders_id", nullable=false, referencedColumnName = "id")
-//    private List<OrderModel> orders = new ArrayList<>();
+    @OneToMany
+    @JoinColumn(name="orders_id", nullable=false, referencedColumnName = "id")
+    private List<OrderModel> orders = new ArrayList<>();
 
     private String deliveryPersonName;
     private String deliveryPersonPhone;
     private String status;
+
     private ZonedDateTime estimatedArrival;
 }

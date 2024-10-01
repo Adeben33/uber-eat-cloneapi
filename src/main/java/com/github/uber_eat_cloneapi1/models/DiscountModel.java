@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class DiscountModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private String description;
     private double discountAmount;
     private boolean isPercentage; // True if discount is percentage-based

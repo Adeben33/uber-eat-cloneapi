@@ -21,10 +21,10 @@ import java.util.List;
 public class TransactionModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String d;
+    private Long id;
 
-//    @OneToMany(mappedBy = "transaction")
-//    private List<OrderModel> orders = new ArrayList<>();
+    @OneToMany(mappedBy = "transaction")
+    private List<OrderModel> orders = new ArrayList<>();
 
     @OneToOne
     @JoinColumn(name = "payment_id", nullable = false,referencedColumnName = "id")

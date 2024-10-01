@@ -20,7 +20,7 @@ public class MenuModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private String name;
     private String description;
     private double price;

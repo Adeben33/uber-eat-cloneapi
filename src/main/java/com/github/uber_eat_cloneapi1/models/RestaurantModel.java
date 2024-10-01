@@ -20,7 +20,7 @@ import java.util.List;
 public class RestaurantModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
     private String name;
     private String cuisine;
     private double rating;
