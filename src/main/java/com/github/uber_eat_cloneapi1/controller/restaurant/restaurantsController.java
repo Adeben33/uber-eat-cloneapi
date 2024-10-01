@@ -26,5 +26,16 @@ public class restaurantsController {
         return "Menu for restaurant with ID: " + restaurantId;
     }
 
+    @GetMapping("/reviews/restaurant/{restaurantId}")
+    public String getRestaurantReviews(@PathVariable String restaurantId) {
+        return "List of reviews for restaurant with ID: " + restaurantId;
+    }
+
+
+    @PostMapping("/reviews/restaurant/{restaurantId}")
+    public String submitRestaurantReview(@PathVariable String restaurantId, @RequestBody ReviewDTO reviewDTO) {
+        return "Review submitted for restaurant with ID: " + restaurantId;
+    }
+
 
 }
