@@ -107,6 +107,9 @@ public class AuthController {
         }
         }
 
-
+    @PostMapping("/auth/logout")
+    public String logout() {
+        return "User logged out successfully.";
+    }
 
 }
