@@ -22,6 +22,14 @@ public class UserModel {
 
     private String email;
     private String password;
+    private String firstname;
+    private String lastname;
+    private String phone;
+    private String address;
+    private String city;
+    private String state;
+    private String country;
+    private String zip;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(

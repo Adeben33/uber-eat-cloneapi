@@ -1,4 +1,4 @@
-package com.github.uber_eat_cloneapi1.controller;
+package com.github.uber_eat_cloneapi1.controller.user;
 
 import com.github.uber_eat_cloneapi1.dto.requests.LoginDTO;
 import com.github.uber_eat_cloneapi1.models.RoleModel;
@@ -7,17 +7,20 @@ import com.github.uber_eat_cloneapi1.dto.requests.RegisterDTO;
 import com.github.uber_eat_cloneapi1.repository.RoleRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
 import com.github.uber_eat_cloneapi1.security.JwtGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +28,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
+    // Helper method for setting up headers with authorization
+    private HttpHeaders createHeaders(String token ) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        headers.set("Content-Type", "application/json");
+        return headers;
+    }
+
 
     private UserRepo userRepo;
     private RoleRepo roleRepo;
@@ -42,8 +56,22 @@ public class AuthController {
         this.jwtGenerator = jwtGenerator;;
     }
 
+    @GetMapping("/profile")
+    public ResponseEntity<String> getUserProfile(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not authenticated");
+        }
+
+        log.info("Authentication object: {}", authentication);
+        log.info("Authorities: {}", authentication.getAuthorities());
+        return ResponseEntity.ok("User Profile");
+    }
+
+
+
     @PostMapping("register")
     public ResponseEntity<?> register(@RequestBody RegisterDTO registerDTO) {
+
         if(userRepo.existsByEmail(registerDTO.getEmail())){
             return ResponseEntity.badRequest().body("Email Already Exists");
         }
@@ -53,7 +81,7 @@ public class AuthController {
         userModel.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
 
         RoleModel roleModel = new RoleModel();
-        roleModel.setName("USER");
+        roleModel.setName("ADMIN");
 
         userModel.setRoles(Collections.singletonList(roleModel));
         userRepo.save(userModel);
@@ -64,15 +92,21 @@ public class AuthController {
 
     @PostMapping("login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO){
-    Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword())
-    );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword())
+            );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String token = jwtGenerator.generateToken(authentication);
+            String token = jwtGenerator.generateToken(authentication);
 
-        return ResponseEntity.ok(List.of("Login Successful",token));
-    }
+            return ResponseEntity.ok().headers(createHeaders(token)).body(List.of("Login Successful", token));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid login credentials");
+        }
+        }
+
+
 
 }

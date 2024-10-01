@@ -45,6 +45,9 @@ public class SecurityConfig {
                 .and()
                 .authorizeRequests()
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/api/v1/user/**").hasAuthority("ROLE_USER")
+                .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/error*").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .httpBasic();
