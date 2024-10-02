@@ -1,4 +1,4 @@
-package com.github.uber_eat_cloneapi1.settings;
+package com.github.uber_eat_cloneapi1.controller.settings;
 
 
 import org.springframework.web.bind.annotation.*;

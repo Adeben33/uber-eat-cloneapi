@@ -1,5 +1,6 @@
 package com.github.uber_eat_cloneapi1.controller.restaurant;
 
+import com.github.uber_eat_cloneapi1.dto.request.*;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -54,10 +55,6 @@ public class restaurantsController {
         return "Review submitted for restaurant with ID: " + restaurantId;
     }
 
-    @PostMapping("/restaurants/{restaurantId}/menu")
-            public String addMenuItem(@PathVariable String restaurantId, @RequestBody MenuItemDTO menuItemDTO) {
-            return "Menu item " + menuItemDTO.getName() + " added to restaurant with ID: " + restaurantId;
-            }
 
     @PutMapping("/restaurants/{restaurantId}/menu/{itemId}")
             public String updateMenuItem(@PathVariable String restaurantId, @PathVariable String itemId, @RequestBody MenuItemDTO menuItemDTO) {
