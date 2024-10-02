@@ -26,7 +26,7 @@ public class AddressModel {
     private String state;
     private String country;
     private String postalCode;
-    private String phone;
+
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")

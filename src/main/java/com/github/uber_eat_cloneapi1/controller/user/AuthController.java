@@ -1,6 +1,7 @@
 package com.github.uber_eat_cloneapi1.controller.user;
 
 import com.github.uber_eat_cloneapi1.dto.request.LoginDTO;
+import com.github.uber_eat_cloneapi1.dto.request.RegisterOrLoginDTO;
 import com.github.uber_eat_cloneapi1.models.RoleModel;
 import com.github.uber_eat_cloneapi1.models.UserModel;
 import com.github.uber_eat_cloneapi1.dto.request.RegisterDTO;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -66,6 +68,53 @@ public class AuthController {
         return ResponseEntity.ok("User Profile");
     }
 
+
+    @PostMapping("logiorsignup")
+    public ResponseEntity<?> register(@RequestBody RegisterOrLoginDTO registerOrLoginDTO) {
+
+        if(registerOrLoginDTO.getEmail()!=null || registerOrLoginDTO.getPhoneNumber()!=null){
+
+           Optional<UserModel> user = userRepo.findByEmailOrPhoneNumber(registerOrLoginDTO.getEmail(),
+                   registerOrLoginDTO.getPhoneNumber());
+
+           if(user.isPresent()){
+
+               if(user.get().getPhoneNumber() != null){
+//                   send code to
+               } else if (user.get().getEmail() != null) {
+//                   send code to email
+               }
+
+
+
+           } else {
+               UserModel userModel = new UserModel();
+               if (registerOrLoginDTO.getEmail() != null){
+                   userModel.setEmail(registerOrLoginDTO.getEmail());
+               } else {
+                   userModel.setEmail(registerOrLoginDTO.getPhoneNumber());
+               }
+
+
+           }
+
+           }
+
+        }
+
+
+        UserModel userModel = new UserModel();
+
+        userModel.setEmail(registerDTO.getEmail());
+
+
+        RoleModel roleModel = new RoleModel();
+        roleModel.setName("ADMIN");
+
+        userModel.setRoles(Collections.singletonList(roleModel));
+        userRepo.save(userModel);
+
+        return ResponseEntity.ok().body(List.of(userModel, "User Register Succesfully"));
 
 
     @PostMapping("register")
