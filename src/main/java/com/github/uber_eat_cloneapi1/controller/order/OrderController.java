@@ -1,9 +1,6 @@
 package com.github.uber_eat_cloneapi1.controller.order;
 
-import com.github.uber_eat_cloneapi1.dto.request.DiscountDTO;
-import com.github.uber_eat_cloneapi1.dto.request.OrderDTO;
-import com.github.uber_eat_cloneapi1.dto.request.SpecialInstructionsDTO;
-import com.github.uber_eat_cloneapi1.dto.request.TaxAndFeesDTO;
+import com.github.uber_eat_cloneapi1.dto.request.*;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

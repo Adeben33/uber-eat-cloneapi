@@ -1,6 +1,7 @@
 package com.github.uber_eat_cloneapi1.controller.settings;
 
 
+import com.github.uber_eat_cloneapi1.dto.request.SettingsDTO;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

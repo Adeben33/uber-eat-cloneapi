@@ -17,7 +17,6 @@ public class restaurantsController {
             }
 
 
-
             @GetMapping("/restaurants")
              public String getRestaurants() {
             return "List of all restaurants.";
@@ -65,10 +64,10 @@ public class restaurantsController {
             return "Menu item with ID: " + itemId + " deleted from restaurant with ID: " + restaurantId;
             }
 
-    @GetMapping("/restaurants/{restaurantId}/menu")
-            public String getAllMenuItems(@PathVariable String restaurantId) {
-            return "List of menu items for restaurant with ID: " + restaurantId;
-            }
+//    @GetMapping("/restaurants/{restaurantId}/menu")
+//            public String getAllMenuItems(@PathVariable String restaurantId) {
+//            return "List of menu items for restaurant with ID: " + restaurantId;
+//            }
 
     @PostMapping("/restaurants/{restaurantId}/operating-hours")
             public String setRestaurantOperatingHours(@PathVariable String restaurantId, @RequestBody OperatingHoursDTO operatingHoursDTO) {
@@ -121,6 +120,4 @@ public class restaurantsController {
             public String setRestaurantAvailability(@PathVariable String restaurantId, @RequestBody AvailabilityStatusDTO statusDTO) {
             return "Availability status for restaurant with ID: " + restaurantId + " set to: " + statusDTO.getStatus();
             }
-
-
 }
