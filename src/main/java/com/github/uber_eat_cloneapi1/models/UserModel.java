@@ -26,6 +26,9 @@ public class UserModel {
     private String lastname;
     private String phoneNumber;
 
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER,mappedBy = "user")
+    private OtpModel otp;
+
 
     @OneToOne(cascade = CascadeType.ALL) // Ensure this field references AddressModel
     @JoinColumn(name = "address_id", referencedColumnName = "id")

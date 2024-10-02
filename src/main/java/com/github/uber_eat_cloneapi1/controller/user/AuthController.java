@@ -86,7 +86,7 @@ public class AuthController {
                }
 
 
-
+               return ResponseEntity.ok().body(List.of(user, "User Register Succesfully"));
            } else {
                UserModel userModel = new UserModel();
                if (registerOrLoginDTO.getEmail() != null){
@@ -95,26 +95,26 @@ public class AuthController {
                    userModel.setEmail(registerOrLoginDTO.getPhoneNumber());
                }
 
-
+               return ResponseEntity.ok().body(List.of(user, "User Register Succesfully"));
            }
 
            }
-
+        return null;
         }
 
 
-        UserModel userModel = new UserModel();
-
-        userModel.setEmail(registerDTO.getEmail());
-
-
-        RoleModel roleModel = new RoleModel();
-        roleModel.setName("ADMIN");
-
-        userModel.setRoles(Collections.singletonList(roleModel));
-        userRepo.save(userModel);
-
-        return ResponseEntity.ok().body(List.of(userModel, "User Register Succesfully"));
+//        UserModel userModel = new UserModel();
+//
+//        userModel.setEmail(registerDTO.getEmail());
+//
+//
+//        RoleModel roleModel = new RoleModel();
+//        roleModel.setName("ADMIN");
+//
+//        userModel.setRoles(Collections.singletonList(roleModel));
+//        userRepo.save(userModel);
+//
+//
 
 
     @PostMapping("register")
