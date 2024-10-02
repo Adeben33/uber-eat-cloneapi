@@ -1,5 +1,6 @@
 package com.github.uber_eat_cloneapi1.controller.driver;
 
+import com.github.uber_eat_cloneapi1.dto.request.StatusUpdatedDTO;
 import org.springframework.web.bind.annotation.*;
 
 public class Driver {
@@ -15,7 +16,7 @@ public class Driver {
     }
 
     @PostMapping("/drivers/{driverId}/update-status")
-    public String updateDriverStatus(@PathVariable String driverId, @RequestBody StatusUpdateDTO statusUpdateDTO) {
+    public String updateDriverStatus(@PathVariable String driverId, @RequestBody StatusUpdatedDTO statusUpdateDTO) {
         return "Driver status updated for ID: " + driverId;
     }
 

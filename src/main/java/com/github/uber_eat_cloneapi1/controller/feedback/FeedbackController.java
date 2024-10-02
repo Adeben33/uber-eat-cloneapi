@@ -1,5 +1,8 @@
 package com.github.uber_eat_cloneapi1.controller.feedback;
 
+import com.github.uber_eat_cloneapi1.dto.request.FeedbackDTO;
+import com.github.uber_eat_cloneapi1.dto.request.ReplyDTO;
+import com.github.uber_eat_cloneapi1.dto.request.ResponseDTO;
 import org.springframework.web.bind.annotation.*;
 
 

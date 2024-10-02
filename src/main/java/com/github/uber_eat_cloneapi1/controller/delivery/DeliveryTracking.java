@@ -1,5 +1,7 @@
 package com.github.uber_eat_cloneapi1.controller.delivery;
 
+import com.github.uber_eat_cloneapi1.dto.request.AvailabilityStatusDTO;
+import com.github.uber_eat_cloneapi1.dto.request.DeliveryStatusUpdateDTO;
 import org.springframework.web.bind.annotation.*;
 
 
