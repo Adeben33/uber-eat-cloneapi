@@ -3,6 +3,8 @@ package com.github.uber_eat_cloneapi1.service.emailService;
 
 import java.util.concurrent.CompletableFuture;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -27,7 +29,7 @@ public class EmailService {
         String emailContent = getUberStyleOtpEmailTemplate(name, otp);
 
         // Set email details
-        helper.setFrom("your-email@gmail.com");
+        helper.setFrom("adeniyiebenezer33@gmail.com");
         helper.setTo(toEmail);
         helper.setSubject("Your OTP for Login");
         helper.setText(emailContent, true); // 'true' indicates HTML content
