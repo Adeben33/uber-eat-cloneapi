@@ -1,4 +1,4 @@
-package com.github.uber_eat_cloneapi1.service.otpService;
+package com.github.uber_eat_cloneapi1.service;
 
 
 import com.github.uber_eat_cloneapi1.models.OtpModel;
@@ -6,9 +6,9 @@ import com.github.uber_eat_cloneapi1.models.UserModel;
 import com.github.uber_eat_cloneapi1.repository.OtpRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,6 +47,7 @@ public class OTPServiceImpl implements OtpService{
 
 
     @Override
+    @Async
     public CompletableFuture<Boolean> sendOTPByEmail(String email, String name, String accountNumber, String otp) {
         return null;
     }

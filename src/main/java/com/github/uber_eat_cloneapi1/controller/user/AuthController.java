@@ -79,11 +79,18 @@ public class AuthController {
 
            if(user.isPresent()){
 
-               if(user.get().getPhoneNumber() != null){
-//                   send code to
-               } else if (user.get().getEmail() != null) {
-//                   send code to email
+               if (user.get().getPhoneNumber() != null && !user.get().getPhoneNumber().isEmpty()) {
+                   // Phone number is present, send the code to the phone number
+//                   sendCodeToPhone(user.getPhoneNumber());
+
+               } else if (user.get().getEmail() != null && !user.get().getEmail().isEmpty()) {
+                   // Phone number is not present, but email is present, send the code to the email
+//                   sendCodeToEmail(user.getEmail());
+               } else {
+                   // Neither phone number nor email is available, handle this case (e.g., throw an exception or log an error)
+                   throw new IllegalArgumentException("User must have either a phone number or an email.");
                }
+
 
 
                return ResponseEntity.ok().body(List.of(user, "User Register Succesfully"));
