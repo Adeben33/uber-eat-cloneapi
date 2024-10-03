@@ -26,15 +26,15 @@ public class UserModel {
     private String lastname;
     private String phoneNumber;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER,mappedBy = "user")
-    private OtpModel otp;
+//    @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
+//    private OtpModel otp;
 
 
-    @OneToOne(cascade = CascadeType.ALL) // Ensure this field references AddressModel
+    @OneToOne(fetch = FetchType.EAGER,cascade = CascadeType.ALL) // Ensure this field references AddressModel
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private AddressModel address;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "user_roles"
             , joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id")

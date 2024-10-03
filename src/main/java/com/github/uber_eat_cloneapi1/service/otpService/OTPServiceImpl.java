@@ -1,12 +1,15 @@
-package com.github.uber_eat_cloneapi1.service;
+package com.github.uber_eat_cloneapi1.service.otpService;
 
 
+import com.github.uber_eat_cloneapi1.controller.user.AuthController;
 import com.github.uber_eat_cloneapi1.models.OtpModel;
 import com.github.uber_eat_cloneapi1.models.UserModel;
 import com.github.uber_eat_cloneapi1.repository.OtpRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -20,7 +23,9 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-public class OTPServiceImpl implements OtpService{
+public class OTPServiceImpl implements OtpService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final UserRepo userRepo;
     private final OtpRepo otpRepo;
@@ -34,29 +39,63 @@ public class OTPServiceImpl implements OtpService{
         this.mailSender = mailSender;
     }
 
-
     @Override
-    public String generateOTP(Long tokenKey , UserModel user) {
+    public String generateOTP(Long tokenKey, UserModel user) {
+        // Generate a random 4-digit OTP
+        Random random = new Random();
+        String token = String.format("%04d", random.nextInt(9000) + 1000);
 
-        Random random = new Random(tokenKey);
-        String token =  String.format("%04d", random.nextInt(9000)+1000);
-
+        // Set expiry date for the OTP
         ZonedDateTime expiryDate = ZonedDateTime.now().plusMinutes(10);
 
+        // Create the OTP model instance
         OtpModel otp = OtpModel.builder()
                 .otp(token)
                 .otpExpiryDate(expiryDate)
                 .user(user)
+                .creationDate(ZonedDateTime.now()) // Assuming you have a creation date field
+                .updateDate(ZonedDateTime.now()) // Assuming you have an update date field
                 .build();
 
-         return token;
+        // Check if there is an existing OTP for the user based on email or phone number
+        OtpModel existingOtp = otpRepo.findOtpByEmailOrPhoneNumber(user.getEmail());
+
+        // If no existing OTP found by email, check by phone number
+        if (existingOtp == null) {
+            existingOtp = otpRepo.findOtpByEmailOrPhoneNumber(user.getPhoneNumber());
+        }
+
+        // If an OTP already exists, check if it has expired
+        if (existingOtp != null) {
+            // Check if the existing OTP has expired
+            if (existingOtp.getOtpExpiryDate().isAfter(ZonedDateTime.now())) {
+                log.info(existingOtp.getOtpExpiryDate().toString());
+                // Existing OTP is still valid, log and return it
+                log.info("Existing OTP is still valid: " + existingOtp.getOtp());
+                return existingOtp.getOtp(); // Return existing valid OTP
+            } else {
+                // Existing OTP has expired; update it
+                existingOtp.setOtp(token); // Update the OTP value
+                existingOtp.setOtpExpiryDate(expiryDate); // Update the expiry date
+                existingOtp.setUpdateDate(ZonedDateTime.now()); // Update the update date
+                otpRepo.updateOtpForUser(existingOtp); // Assuming this method exists
+                log.info("Updated expired OTP with new OTP: " + existingOtp.getOtp());
+            }
+        } else {
+            // No existing OTP found; save the new one
+            otpRepo.save(otp);
+            log.info("Saved new OTP: " + otp.toString());
+        }
+
+        return token; // Return the newly generated OTP
     }
 
 
+
     @Override
-    @Async
+//    @Async
     // Method to send OTP email with HTML template
-    public CompletableFuture<Boolean> sendOtpEmail(String toEmail, String name, String accountNumber, String otp) throws MessagingException {
+    public CompletableFuture<Boolean> sendOtpEmail(String toEmail, String name, String otp) throws MessagingException {
         // Create a MimeMessage
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
@@ -71,7 +110,7 @@ public class OTPServiceImpl implements OtpService{
         helper.setText(emailContent, true); // 'true' indicates HTML content
 
         // Send the email
-        mailSender.send(message);
+//        mailSender.send(message);
         System.out.println("OTP email sent successfully to " + toEmail);
 
         return CompletableFuture.completedFuture(true);

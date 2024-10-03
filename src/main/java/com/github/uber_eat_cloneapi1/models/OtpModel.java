@@ -24,7 +24,7 @@ public class OtpModel {
 
     private ZonedDateTime otpExpiryDate;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne
     @JoinColumn (name = "user_id", referencedColumnName = "id")
     private UserModel user;
 
