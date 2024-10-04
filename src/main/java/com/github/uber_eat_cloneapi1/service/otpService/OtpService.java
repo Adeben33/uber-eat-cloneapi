@@ -9,6 +9,9 @@ public interface OtpService {
     String generateOTP(Long tokenKey , UserModel user);
 
     CompletableFuture<Boolean> sendOtpEmail(String toEmail, String name, String otp) throws MessagingException;
+
     boolean validateOTP(String otp, UserModel user);
+
     String getUberStyleOtpEmailTemplate(String name, String otp);
+
 }

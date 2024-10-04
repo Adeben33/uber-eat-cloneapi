@@ -16,6 +16,12 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -91,9 +97,8 @@ public class OTPServiceImpl implements OtpService {
     }
 
 
-
     @Override
-//    @Async
+    @Async
     // Method to send OTP email with HTML template
     public CompletableFuture<Boolean> sendOtpEmail(String toEmail, String name, String otp) throws MessagingException {
         // Create a MimeMessage
@@ -110,11 +115,56 @@ public class OTPServiceImpl implements OtpService {
         helper.setText(emailContent, true); // 'true' indicates HTML content
 
         // Send the email
-//        mailSender.send(message);
+        mailSender.send(message);
         System.out.println("OTP email sent successfully to " + toEmail);
 
         return CompletableFuture.completedFuture(true);
     }
+
+
+    public CompletableFuture<Boolean> sendOtpSMS(String phoneNumber, String otp) throws MessagingException {
+
+        // Create HttpClient instance
+        HttpClient client = HttpClient.newHttpClient();
+
+        // The API URL
+        String url = "https://d9kv48.api.infobip.com/sms/2/text/advanced";
+
+        // JSON body
+        // JSON body with dynamic phone number and token inserted into the message
+        String jsonBody = String.format(
+                "{\"messages\":[{\"destinations\":[{\"to\":\"%s\"}],\"from\":\"InfoSMS\",\"text\":\"Your Uber code is %s. Never share this code. Reply STOP ALL to +1 415-237-0403 to unsubscribe.\"}]}",
+                phoneNumber, otp
+        );
+
+        String apikey = "4f57c7ed678d935e03fc95b5909a6137-75055f39-0a5f-4d69-b25b-82c05ad4d038"
+
+        // Create HttpRequest
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofMinutes(2)) // Set a timeout duration
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .header("Authorization", "Bearer your_api_key_here") // Replace with actual API key
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody)) // Post the JSON data
+                .build();
+
+        // Send the request and handle the response
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Check if the request was successful
+            if (response.statusCode() == 200) {
+                System.out.println("Response: " + response.body());
+            } else {
+                System.out.println("Request failed with status code: " + response.statusCode());
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace(); // Handle potential errors like connection failure
+        }
+
+    }
+
 
 
 
@@ -144,7 +194,7 @@ public class OTPServiceImpl implements OtpService {
         return false;
     }
 
-
+    @Override
     public String getUberStyleOtpEmailTemplate(String name, String otp) {
         return "<div style=\"font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2\">"
                 + "<div style=\"margin:50px auto;width:70%;padding:20px 0\">"
