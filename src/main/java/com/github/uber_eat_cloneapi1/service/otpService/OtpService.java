@@ -10,6 +10,12 @@ public interface OtpService {
 
     CompletableFuture<Boolean> sendOtpEmail(String toEmail, String name, String otp) throws MessagingException;
 
+    Boolean sendOtpSMS(String phoneNumber, String otp) throws MessagingException;
+
+    Boolean sendOtpSMS1(String phoneNumber, String otp) throws MessagingException;
+
+    Boolean sendOtpSMStwillo(String phoneNumberTo, String phoneNumberFrom, String otp) throws MessagingException;
+
     boolean validateOTP(String otp, UserModel user);
 
     String getUberStyleOtpEmailTemplate(String name, String otp);

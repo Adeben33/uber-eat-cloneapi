@@ -1,11 +1,22 @@
 package com.github.uber_eat_cloneapi1.service.otpService;
 
 
+import com.github.uber_eat_cloneapi1.config.TwilloConfig;
 import com.github.uber_eat_cloneapi1.controller.user.AuthController;
 import com.github.uber_eat_cloneapi1.models.OtpModel;
 import com.github.uber_eat_cloneapi1.models.UserModel;
 import com.github.uber_eat_cloneapi1.repository.OtpRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
+import com.infobip.*;
+import com.infobip.api.*;
+
+import com.infobip.model.SmsAdvancedTextualRequest;
+import com.infobip.model.SmsDestination;
+import com.infobip.model.SmsResponse;
+import com.infobip.model.SmsTextualMessage;
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
@@ -23,6 +34,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -36,13 +48,17 @@ public class OTPServiceImpl implements OtpService {
     private final UserRepo userRepo;
     private final OtpRepo otpRepo;
     private final JavaMailSender mailSender;
+    private final TwilloConfig twilloConfig;
+
+
 
 
     @Autowired
-    public OTPServiceImpl(UserRepo userRepo, OtpRepo otpRepo, JavaMailSender mailSender) {
+    public OTPServiceImpl(UserRepo userRepo, OtpRepo otpRepo, JavaMailSender mailSender, TwilloConfig twilloConfig) {
         this.userRepo = userRepo;
         this.otpRepo = otpRepo;
         this.mailSender = mailSender;
+        this.twilloConfig = new TwilloConfig();
     }
 
     @Override
@@ -121,50 +137,111 @@ public class OTPServiceImpl implements OtpService {
         return CompletableFuture.completedFuture(true);
     }
 
+    @Override
+    public Boolean sendOtpSMS(String phoneNumber, String otp) throws MessagingException {
 
-    public CompletableFuture<Boolean> sendOtpSMS(String phoneNumber, String otp) throws MessagingException {
+            log.info("Preparing to send OTP SMS...");
 
-        // Create HttpClient instance
-        HttpClient client = HttpClient.newHttpClient();
+            // Create HttpClient instance
+            HttpClient client = HttpClient.newHttpClient();
 
-        // The API URL
-        String url = "https://d9kv48.api.infobip.com/sms/2/text/advanced";
+            // The API URL
+            String url = "https://d9kv48.api.infobip.com/sms/2/text/advanced";
 
-        // JSON body
-        // JSON body with dynamic phone number and token inserted into the message
-        String jsonBody = String.format(
-                "{\"messages\":[{\"destinations\":[{\"to\":\"%s\"}],\"from\":\"InfoSMS\",\"text\":\"Your Uber code is %s. Never share this code. Reply STOP ALL to +1 415-237-0403 to unsubscribe.\"}]}",
-                phoneNumber, otp
-        );
+            // JSON body with dynamic phone number and OTP
+            String jsonBody = String.format(
+                    "{\"messages\":[{\"destinations\":[{\"to\":\"%s\"}],\"from\":\"InfoSMS\",\"text\":\"Your Uber code is %s. Never share this code. Reply STOP ALL to +1 *********** to unsubscribe.\"}]}",
+                    phoneNumber, otp
+            );
 
-        String apikey = "4f57c7ed678d935e03fc95b5909a6137-75055f39-0a5f-4d69-b25b-82c05ad4d038"
+            String apikey = "4f57c7ed678d935e03fc95b5909a6137-75055f39-0a5f-4d69-b25b-82c05ad4d038";
 
-        // Create HttpRequest
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(Duration.ofMinutes(2)) // Set a timeout duration
-                .header("Content-Type", "application/json")
-                .header("Accept", "application/json")
-                .header("Authorization", "Bearer your_api_key_here") // Replace with actual API key
-                .POST(HttpRequest.BodyPublishers.ofString(jsonBody)) // Post the JSON data
-                .build();
+            log.info("Sending request to Infobip API...");
 
-        // Send the request and handle the response
-        try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // Create HttpRequest
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofMinutes(2)) // Set a timeout duration
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .header("Authorization", "Bearer " + apikey) // Replace with actual API key
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody)) // Post the JSON data
+                    .build();
 
-            // Check if the request was successful
-            if (response.statusCode() == 200) {
-                System.out.println("Response: " + response.body());
-            } else {
-                System.out.println("Request failed with status code: " + response.statusCode());
+            try {
+                // Send the request and handle the response
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                // Check if the request was successful
+                if (response.statusCode() == 200) {
+                    log.info("OTP SMS sent successfully. Response: {}", response.body());
+                    return true;
+                } else {
+                    log.error("Failed to send OTP SMS. Status code: {}", response.statusCode());
+                    return false;
+                }
+            } catch (IOException | InterruptedException e) {
+                log.warn("Error occurred while sending OTP SMS: {}", e.getMessage());
+                return false;
             }
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace(); // Handle potential errors like connection failure
         }
 
+
+        @Override
+        public Boolean sendOtpSMS1(String phoneNumber, String otp) throws MessagingException{
+
+        log.info("Sending request to Infobip API...");
+
+        String BASE_URL = "https://d9kv48.api.infobip.com/sms/2/text/advanced";
+        String API_KEY = "4f57c7ed678d935e03fc95b5909a6137-75055f39-0a5f-4d69-b25b-82c05ad4d038";
+
+        ApiClient apiClient = ApiClient.forApiKey(ApiKey.from(API_KEY))
+                .withBaseUrl(BaseUrl.from(BASE_URL))
+                .build();
+
+        SmsApi smsApi = new SmsApi(apiClient);
+        SmsTextualMessage smsMessage = new SmsTextualMessage()
+                .from("InfoSMS")
+                .addDestinationsItem(new SmsDestination().to("14168805101"))
+                .text("Hello World from infobip-api-java-client!");
+
+        SmsAdvancedTextualRequest smsMessageRequest = new SmsAdvancedTextualRequest()
+                .messages(List.of(smsMessage));
+
+        try {
+            SmsResponse response = smsApi.sendSmsMessage(smsMessageRequest).execute();
+
+        } catch (ApiException apiException) {
+            log.warn("unable to send OTP SMS: {}", apiException.getMessage());
+            // HANDLE THE EXCEPTION
+        }
+
+        return true;
     }
 
+    // Find your Account Sid and Token at console.twilio.com
+//    public static final String ACCOUNT_SID = "AC2c05472efe9611d701fff921282bd282";
+//
+//    public static final String AUTH_TOKEN = "4257b194bd156191fa7bd45f78a7fd0a";
+
+
+    @Override
+    public Boolean sendOtpSMStwillo(String phoneNumberTo, String phoneNumberFrom, String otp) throws MessagingException{
+        {
+            Twilio.init(twilloConfig.getAccountSid(), twilloConfig.getAuthToken());
+
+            Message message = Message
+                    .creator(
+                            new PhoneNumber(phoneNumberTo),
+                            new PhoneNumber(phoneNumberFrom),
+                            "This is the ship that made the Kessel Run in fourteen parsecs?"
+                    )
+                    .create();
+
+            System.out.println(message.getSid());
+        }
+        return true;
+    }
 
 
 

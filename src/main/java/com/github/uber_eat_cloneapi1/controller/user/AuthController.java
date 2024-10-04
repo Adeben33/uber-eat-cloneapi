@@ -13,6 +13,7 @@ import jakarta.mail.MessagingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,12 @@ public class AuthController {
         headers.set("Content-Type", "application/json");
         return headers;
     }
+
+    @Value("${app.sms.enabled}")
+    private boolean smsEnabled;
+
+    @Value("${app.email.enabled}")
+    private boolean emailEnabled;
 
 
     private final UserRepo userRepo;
@@ -74,6 +81,7 @@ public class AuthController {
     }
 
 
+
     @PostMapping("/logiorsignup")
     public ResponseEntity<?> registerOrSignup(@RequestBody RegisterOrLoginDTO registerOrLoginDTO) {
 
@@ -87,67 +95,77 @@ public class AuthController {
                 Long tokenKey = 233454L;
                 String token = otpService.generateOTP(tokenKey, user.get());
 
-                if (user.get().getPhoneNumber() != null && !user.get().getPhoneNumber().isEmpty()) {
-                    // TODO: Implement sendCodeToPhone logic
-                    // sendCodeToPhone(user.get().getPhoneNumber());
-                } else if (user.get().getEmail() != null && !user.get().getEmail().isEmpty()) {
-                    // Send OTP to email
+                // Send SMS if phone number exists and SMS is enabled
+                if (smsEnabled && user.get().getPhoneNumber() != null && !user.get().getPhoneNumber().isEmpty()) {
+                    try {
+                        otpService.sendOtpSMS1(user.get().getPhoneNumber(), token);
+                    } catch (MessagingException e) {
+                        e.printStackTrace();
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unable to send OTP by SMS");
+                    }
+                }
+                // Send Email if email exists and email sending is enabled
+                else if (emailEnabled && user.get().getEmail() != null && !user.get().getEmail().isEmpty()) {
                     try {
                         String name = user.get().getFirstname() == null ?
                                 "Welcome back" : user.get().getFirstname();
-
                         otpService.sendOtpEmail(user.get().getEmail(), name, token);
                     } catch (MessagingException e) {
                         e.printStackTrace();
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unable to send OTP");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unable to send OTP by email");
                     }
                 } else {
-                    throw new IllegalArgumentException("User must have either a phone number or an email.");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User must have either a phone number or an email.");
                 }
 
                 // Return success response with user information
                 return ResponseEntity.ok().body(List.of(user.get(), "User login successful"));
             }
-            // If user doesn't exist, create new user
+            // If user doesn't exist, create a new user
             else {
                 UserModel newUser = new UserModel();
 
                 // Set either email or phone number based on the provided input
                 if (registerOrLoginDTO.getEmail() != null) {
                     newUser.setEmail(registerOrLoginDTO.getEmail());
-                } else if (registerOrLoginDTO.getPhoneNumber() != null) {
+                }
+                if (registerOrLoginDTO.getPhoneNumber() != null) {
                     newUser.setPhoneNumber(registerOrLoginDTO.getPhoneNumber());
                 }
 
-                // Set any other required fields in newUser, like name, password, etc.
-                // TODO: Save newUser to database
+                // Save new user to database
                 userRepo.save(newUser);
 
                 // Generate OTP and send it to the new user's email or phone
                 Long tokenKey = 233454L;
-
                 String token = otpService.generateOTP(tokenKey, newUser);
-                log.info(token);
-                if (newUser.getPhoneNumber() != null && !newUser.getPhoneNumber().isEmpty()) {
-                    // TODO: Implement sendCodeToPhone logic
-                    // sendCodeToPhone(newUser.getPhoneNumber());
-                } else if (newUser.getEmail() != null && !newUser.getEmail().isEmpty()) {
+
+                // Send SMS if enabled
+                if (smsEnabled && newUser.getPhoneNumber() != null && !newUser.getPhoneNumber().isEmpty()) {
+                    try {
+                        otpService.sendOtpSMStwillo(newUser.getPhoneNumber(), newUser.getPhoneNumber(), token);
+                    } catch (MessagingException e) {
+                        e.printStackTrace();
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unable to send OTP by SMS");
+                    }
+                }
+                // Send Email if enabled
+                else if (emailEnabled && newUser.getEmail() != null && !newUser.getEmail().isEmpty()) {
                     try {
                         otpService.sendOtpEmail(newUser.getEmail(), "New User", token);
                     } catch (MessagingException e) {
                         e.printStackTrace();
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unable to send OTP");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unable to send OTP by email");
                     }
                 }
 
                 // Return success response with new user information
-                return ResponseEntity.ok().body(List.of(newUser, "User registered successfully2"));
+                return ResponseEntity.ok().body(List.of(newUser, "User registered successfully"));
             }
         }
 
         return ResponseEntity.badRequest().body("Email or Phone Number must be provided.");
     }
-
 
 //        UserModel userModel = new UserModel();
 //
