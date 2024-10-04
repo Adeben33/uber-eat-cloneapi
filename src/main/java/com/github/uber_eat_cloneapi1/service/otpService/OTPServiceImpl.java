@@ -1,6 +1,7 @@
 package com.github.uber_eat_cloneapi1.service.otpService;
 
 
+import com.github.uber_eat_cloneapi1.config.InfobipConfig;
 import com.github.uber_eat_cloneapi1.config.TwilloConfig;
 import com.github.uber_eat_cloneapi1.controller.user.AuthController;
 import com.github.uber_eat_cloneapi1.models.OtpModel;
@@ -49,15 +50,17 @@ public class OTPServiceImpl implements OtpService {
     private final OtpRepo otpRepo;
     private final JavaMailSender mailSender;
     private final TwilloConfig twilloConfig;
+    private final InfobipConfig infobipConfig;
 
 
 
 
     @Autowired
-    public OTPServiceImpl(UserRepo userRepo, OtpRepo otpRepo, JavaMailSender mailSender, TwilloConfig twilloConfig) {
+    public OTPServiceImpl(UserRepo userRepo, OtpRepo otpRepo, JavaMailSender mailSender, TwilloConfig twilloConfig, InfobipConfig infobipConfig) {
         this.userRepo = userRepo;
         this.otpRepo = otpRepo;
         this.mailSender = mailSender;
+        this.infobipConfig = infobipConfig;
         this.twilloConfig = new TwilloConfig();
     }
 
@@ -154,8 +157,6 @@ public class OTPServiceImpl implements OtpService {
                     phoneNumber, otp
             );
 
-            String apikey = "4f57c7ed678d935e03fc95b5909a6137-75055f39-0a5f-4d69-b25b-82c05ad4d038";
-
             log.info("Sending request to Infobip API...");
 
             // Create HttpRequest
@@ -164,7 +165,7 @@ public class OTPServiceImpl implements OtpService {
                     .timeout(Duration.ofMinutes(2)) // Set a timeout duration
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
-                    .header("Authorization", "Bearer " + apikey) // Replace with actual API key
+                    .header("Authorization", "Bearer " + twilloConfig.getAuthToken()) // Replace with actual API key
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody)) // Post the JSON data
                     .build();
 
@@ -192,11 +193,9 @@ public class OTPServiceImpl implements OtpService {
 
         log.info("Sending request to Infobip API...");
 
-        String BASE_URL = "https://d9kv48.api.infobip.com/sms/2/text/advanced";
-        String API_KEY = "4f57c7ed678d935e03fc95b5909a6137-75055f39-0a5f-4d69-b25b-82c05ad4d038";
 
-        ApiClient apiClient = ApiClient.forApiKey(ApiKey.from(API_KEY))
-                .withBaseUrl(BaseUrl.from(BASE_URL))
+        ApiClient apiClient = ApiClient.forApiKey(ApiKey.from(infobipConfig.getApiKey()))
+                .withBaseUrl(BaseUrl.from(infobipConfig.getBaseURL()))
                 .build();
 
         SmsApi smsApi = new SmsApi(apiClient);
