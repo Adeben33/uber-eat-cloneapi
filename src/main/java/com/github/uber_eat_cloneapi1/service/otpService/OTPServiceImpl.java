@@ -219,11 +219,6 @@ public class OTPServiceImpl implements OtpService {
         return true;
     }
 
-    // Find your Account Sid and Token at console.twilio.com
-//    public static final String ACCOUNT_SID = "AC2c05472efe9611d701fff921282bd282";
-//
-//    public static final String AUTH_TOKEN = "4257b194bd156191fa7bd45f78a7fd0a";
-
 
     @Override
     public Boolean sendOtpSMStwillo(String phoneNumberTo, String phoneNumberFrom, String otp) throws MessagingException{
