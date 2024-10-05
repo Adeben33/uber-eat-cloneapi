@@ -22,7 +22,7 @@ public interface OtpRepo extends JpaRepository<OtpModel, Integer> {
 
     // Query OTP by user's email or phone number
     @Query("SELECT o FROM OtpModel o WHERE o.user.email = :identifier OR o.user.phoneNumber = :identifier")
-    OtpModel findOtpByEmailOrPhoneNumber(@Param("identifier") String identifier);
+    Optional<OtpModel> findOtpByEmailOrPhoneNumber(@Param("identifier") String identifier);
 
     @Modifying
     @Transactional

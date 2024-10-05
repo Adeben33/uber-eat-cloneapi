@@ -5,6 +5,7 @@ import com.github.uber_eat_cloneapi1.config.InfobipConfig;
 import com.github.uber_eat_cloneapi1.config.TwilloConfig;
 import com.github.uber_eat_cloneapi1.controller.user.AuthController;
 import com.github.uber_eat_cloneapi1.models.OtpModel;
+import com.github.uber_eat_cloneapi1.models.RoleModel;
 import com.github.uber_eat_cloneapi1.models.UserModel;
 import com.github.uber_eat_cloneapi1.repository.OtpRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -35,10 +37,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -51,17 +50,19 @@ public class OTPServiceImpl implements OtpService {
     private final JavaMailSender mailSender;
     private final TwilloConfig twilloConfig;
     private final InfobipConfig infobipConfig;
+    private final PasswordEncoder passwordEncoder;
 
 
 
 
     @Autowired
-    public OTPServiceImpl(UserRepo userRepo, OtpRepo otpRepo, JavaMailSender mailSender, TwilloConfig twilloConfig, InfobipConfig infobipConfig) {
+    public OTPServiceImpl(UserRepo userRepo, OtpRepo otpRepo, JavaMailSender mailSender, TwilloConfig twilloConfig, InfobipConfig infobipConfig, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.otpRepo = otpRepo;
         this.mailSender = mailSender;
         this.infobipConfig = infobipConfig;
-        this.twilloConfig = new TwilloConfig();
+        this.passwordEncoder = passwordEncoder;
+        this.twilloConfig = twilloConfig;
     }
 
     @Override
@@ -70,45 +71,65 @@ public class OTPServiceImpl implements OtpService {
         Random random = new Random();
         String token = String.format("%04d", random.nextInt(9000) + 1000);
 
+
         // Set expiry date for the OTP
         ZonedDateTime expiryDate = ZonedDateTime.now().plusMinutes(10);
 
         // Create the OTP model instance
         OtpModel otp = OtpModel.builder()
-                .otp(token)
+                .otp(passwordEncoder.encode(token))
                 .otpExpiryDate(expiryDate)
                 .user(user)
                 .creationDate(ZonedDateTime.now()) // Assuming you have a creation date field
                 .updateDate(ZonedDateTime.now()) // Assuming you have an update date field
                 .build();
-
+        log.info("2");
         // Check if there is an existing OTP for the user based on email or phone number
-        OtpModel existingOtp = otpRepo.findOtpByEmailOrPhoneNumber(user.getEmail());
+       Optional<OtpModel> existingOtp = otpRepo.findOtpByEmailOrPhoneNumber(user.getEmail());
 
         // If no existing OTP found by email, check by phone number
-        if (existingOtp == null) {
+        if (existingOtp.isEmpty()) {
+
             existingOtp = otpRepo.findOtpByEmailOrPhoneNumber(user.getPhoneNumber());
         }
 
+
         // If an OTP already exists, check if it has expired
-        if (existingOtp != null) {
+        if (existingOtp.isPresent()) {
             // Check if the existing OTP has expired
-            if (existingOtp.getOtpExpiryDate().isAfter(ZonedDateTime.now())) {
-                log.info(existingOtp.getOtpExpiryDate().toString());
+            if (existingOtp.get().getOtpExpiryDate().isAfter(ZonedDateTime.now())) {
+                log.info(existingOtp.get().getOtpExpiryDate().toString());
                 // Existing OTP is still valid, log and return it
-                log.info("Existing OTP is still valid: " + existingOtp.getOtp());
-                return existingOtp.getOtp(); // Return existing valid OTP
+
+                log.info("Existing OTP is still valid: " + existingOtp.get().getOtp());
+
+                return existingOtp.get().getOtp(); // Return existing valid OTP
             } else {
                 // Existing OTP has expired; update it
-                existingOtp.setOtp(token); // Update the OTP value
-                existingOtp.setOtpExpiryDate(expiryDate); // Update the expiry date
-                existingOtp.setUpdateDate(ZonedDateTime.now()); // Update the update date
-                otpRepo.updateOtpForUser(existingOtp); // Assuming this method exists
-                log.info("Updated expired OTP with new OTP: " + existingOtp.getOtp());
+                existingOtp.get().setOtp( passwordEncoder.encode(token)); // Update the OTP value
+                existingOtp.get().setOtpExpiryDate(expiryDate); // Update the expiry date
+                existingOtp.get().setUpdateDate(ZonedDateTime.now()); // Update the update date
+                otpRepo.updateOtpForUser(existingOtp.get()); // Assuming this method exists
+//                use the harsh has password
+                user.setPassword(existingOtp.get().getOtp());
+
+                userRepo.save(user);
+
+                log.info("Updated expired OTP with new OTP: " + existingOtp.get().getOtp());
             }
         } else {
             // No existing OTP found; save the new one
+
             otpRepo.save(otp);
+
+            user.setPassword(otp.getOtp());
+
+            log.info(user.toString());
+
+            userRepo.save(user);
+
+            log.info(token);
+
             log.info("Saved new OTP: " + otp.toString());
         }
 
@@ -212,7 +233,7 @@ public class OTPServiceImpl implements OtpService {
 
         } catch (ApiException apiException) {
             log.warn("unable to send OTP SMS: {}", apiException.getMessage());
-            // HANDLE THE EXCEPTION
+            return false;
         }
 
         return true;
@@ -241,28 +262,57 @@ public class OTPServiceImpl implements OtpService {
 
     @Override
     public boolean validateOTP(String otp, UserModel user) {
+        // Check if the user exists by email or phone number
         Optional<UserModel> userByEmailOrPhone = userRepo.findByEmailOrPhoneNumber(user.getEmail(), user.getPhoneNumber());
-        Optional<OtpModel> otpRecord = otpRepo.findByOtp(otp);
 
+        // Check if the OTP exists in the database
+        Optional<OtpModel> otpRecord = otpRepo.findOtpByEmailOrPhoneNumber(user.getEmail());
+
+        // Ensure both user and OTP are present before proceeding
         if (userByEmailOrPhone.isPresent() && otpRecord.isPresent()) {
             UserModel foundUser = userByEmailOrPhone.get();
             OtpModel foundOtp = otpRecord.get();
 
+            log.info(foundUser.toString());
+            log.info(foundOtp.toString());
+
+            // Check if the provided OTP (raw password) is null
+            if (otp == null) {
+                log.error("Provided OTP is null");
+                return false;  // You may return false or throw a custom exception
+            }
+
             // Check if the OTP has expired
             if (foundOtp.getOtpExpiryDate().isBefore(ZonedDateTime.now())) {
+                log.warn("OTP has expired for user: " + foundUser.getEmail());
                 return false;
             }
 
-            // Validate if the OTP belongs to the correct user
+            // Check if the OTP belongs to the correct user (match by email or phone number)
             if (Objects.equals(foundUser.getPhoneNumber(), foundOtp.getUser().getPhoneNumber())
                     || Objects.equals(foundUser.getEmail(), foundOtp.getUser().getEmail())) {
 
-                // Check if the OTP matches
-                return Objects.equals(otp, foundOtp.getOtp());
+                // Ensure that the found OTP is also not null (the hashed OTP)
+                if (foundOtp.getOtp() == null) {
+                    log.error("Stored hashed OTP is null for user: " + foundUser.getEmail());
+                    return false;  // Handle this case, maybe the OTP record was corrupted
+                }
+
+                // Use passwordEncoder.matches() to verify the hashed OTP
+                if (passwordEncoder.matches(otp, foundOtp.getOtp())) {
+                    log.info("OTP validation successful for user: " + foundUser.getEmail());
+                    return true;
+                } else {
+                    log.warn("OTP does not match for user: " + foundUser.getEmail());
+                }
+            } else {
+                log.warn("OTP does not belong to the correct user: " + foundUser.getEmail());
             }
+        } else {
+            log.warn("Either user or OTP record not found.");
         }
 
-        return false;
+        return false;  // Return false if OTP validation fails or user/OTP is not found
     }
 
     @Override
