@@ -14,7 +14,6 @@ import java.time.ZonedDateTime;
 @NoArgsConstructor
 @Table(name = "payments")
 @Entity
-
 public class RefreshTokenModel {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)

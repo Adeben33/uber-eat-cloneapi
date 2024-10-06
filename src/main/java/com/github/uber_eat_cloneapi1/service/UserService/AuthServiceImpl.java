@@ -27,7 +27,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,12 +45,14 @@ public class AuthServiceImpl {
 //    private final OtpRepo otpRepo;
 
     // Helper method for setting up headers with authorization
-    private HttpHeaders createHeaders(String token) {
+    private HttpHeaders createHeaders(String token, String type) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + token);
+        headers.set(type, "Bearer " + token);
         headers.set("Content-Type", "application/json");
         return headers;
     }
+
+
 
 
     private final UserRepo userRepo;
@@ -105,7 +106,7 @@ public class AuthServiceImpl {
         }
     }
 
-    public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
+    public ResponseEntity<?> login(LoginDTO loginDTO) {
 
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -116,15 +117,24 @@ public class AuthServiceImpl {
 
             String token = jwtGenerator.generateToken(authentication);
 
-            return ResponseEntity.ok().headers(createHeaders(token)).body(List.of("Login Successful", token));
+            return ResponseEntity.ok().headers(createHeaders(token,"AUTHORIZATION")).body(List.of("Login Successful", token));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid login credentials");
         }
     }
 
-    public ResponseEntity<?> logout() {
-        return null;
-    }
+    public ResponseEntity<?> logout(LogoutRequestDTO logoutRequestDTO){
+
+            // Get the refresh token from the request
+            String refreshToken = logoutRequestDTO.getRefreshToken();
+
+            // Invalidate the refresh token (remove from DB)
+            refreshTokenService.invalidateRefreshToken(refreshToken);
+
+            return ResponseEntity.ok("Logged out successfully.");
+        }
+
+
 
     public ResponseEntity<?> register(RegisterDTO registerDTO) {
 
@@ -168,35 +178,58 @@ public class AuthServiceImpl {
 
     public ResponseEntity<?> verifyOTPAndLogin(OTPDTO otpdto) {
 
-        Optional<UserModel> user = userRepo.findByEmailOrPhoneNumber(otpdto.getEmail(), otpdto.getPhoneNumber());
-        if (!user.isPresent()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("user not found");
+        // Check if there is an existing refresh token in the database by email or phone number
+        Optional<RefreshTokenModel> refreshTokenByEmailOrPhoneNumber = refreshTokenRepo.findRefreshTokenByEmailOrPhoneNumber(otpdto.getEmail());
+
+        if (refreshTokenByEmailOrPhoneNumber.isEmpty()) {
+            refreshTokenByEmailOrPhoneNumber = refreshTokenRepo.findRefreshTokenByEmailOrPhoneNumber(otpdto.getPhoneNumber());
+        }
+
+//         If a refresh token is present and valid, return "User is already logged in."
+        if (refreshTokenByEmailOrPhoneNumber.isPresent() && refreshTokenService.isValidRefreshToken(refreshTokenByEmailOrPhoneNumber.get())) {
+            return ResponseEntity.ok().body("User is already logged in.");
         }
 
 
+
+        // If no valid refresh token, find the user by email or phone number
+        Optional<UserModel> user = userRepo.findByEmailOrPhoneNumber(otpdto.getEmail(), otpdto.getPhoneNumber());
+        if (user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+        }
+
+        // Validate the OTP
         if (otpService.validateOTP(otpdto.getOtp(), user.get())) {
             try {
+                // Authenticate the user
                 Authentication authentication = authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(user.get().getEmail(), otpdto.getOtp())
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
+                // Generate JWT token
                 String token = jwtGenerator.generateToken(authentication);
 
-                String refreshToken = refreshTokenService.createRefreshToken(authentication.getName());
+                // Create new refresh token and save it in the database
+                RefreshTokenModel refreshToken = refreshTokenService.createRefreshToken(authentication.getName());
 
+                // Create HttpHeaders and add Authorization and Refresh-Token headers
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Authorization", "Bearer " + token);
+                headers.add("Refresh-Token", refreshToken.getToken());
 
+                // Return response with both tokens in headers
+                return ResponseEntity.ok().headers(headers).body(refreshToken);
 
-                return ResponseEntity.ok().headers(createHeaders(token)).body(new JWTResponse(token, refreshToken) );
             } catch (AuthenticationException e) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid login credentials");
             }
-
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Otp not valid");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("OTP not valid");
     }
+
 
     private String generateAndSendOtpByEmail(UserModel user) throws MessagingException {
         if (emailEnabled && user.getEmail() != null && !user.getEmail().isEmpty()) {
@@ -312,6 +345,33 @@ public class AuthServiceImpl {
         }
         return ResponseEntity.badRequest().body("Otp not generated");
     }
+
+    public ResponseEntity<?> refreshJWTtoken(RefreshTokenRequest refreshTokenRequest) {
+
+        String requestRefreshToken = refreshTokenRequest.getRefreshToken();
+
+        // Find the refresh token from the database
+        Optional<RefreshTokenModel> refreshTokenOpt = refreshTokenService.findByToken(requestRefreshToken);
+
+        // Check if the refresh token is valid
+        if (refreshTokenOpt.isPresent() && refreshTokenService.isValidRefreshToken(refreshTokenOpt.get())) {
+            // Get the user associated with the refresh token
+            UserModel user = refreshTokenOpt.get().getUser();
+
+            // Generate a new JWT based on the user's information
+            String newJwt = jwtGenerator.generateToken(user.getEmail(), user.getRoles());
+            // Return the new JWT and the same refresh token
+            JWTResponse jwtResponse = new JWTResponse(newJwt, requestRefreshToken);
+
+            return ResponseEntity.ok(jwtResponse);
+        }
+
+        // If the refresh token is invalid or expired, return a forbidden response
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid or expired refresh token");
+    }
+
+
+
 }
 
 

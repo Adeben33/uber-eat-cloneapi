@@ -20,7 +20,14 @@ public interface RefreshTokenRepo extends JpaRepository<RefreshTokenModel, Long>
 
 
     // Query OTP by user's email or phone number
-    @Query("SELECT o FROM OtpModel o WHERE o.user.email = :identifier OR o.user.phoneNumber = :identifier")
+    @Query("SELECT o FROM RefreshTokenModel o WHERE o.user.email = :identifier OR o.user.phoneNumber = :identifier")
     Optional<RefreshTokenModel> findRefreshTokenByEmailOrPhoneNumber(@Param("identifier") String identifier);
+
+
+
+    Optional<RefreshTokenModel> findByToken(String token);
+
+    @Transactional
+    void deleteByUser(UserModel user);
 
 }

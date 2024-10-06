@@ -22,7 +22,8 @@ public class PaymentModel {
     private Long id;
 
     private String paymentMethod;
-    private double amount;
+
+//    private double amount;
 
     @OneToMany
     @JoinColumn(name="order_id", nullable=false, referencedColumnName = "id")

@@ -1,6 +1,6 @@
 package com.github.uber_eat_cloneapi1.controller.user;
-
 import com.github.uber_eat_cloneapi1.dto.request.*;
+import com.github.uber_eat_cloneapi1.models.RefreshTokenModel;
 import com.github.uber_eat_cloneapi1.security.JwtGenerator;
 import com.github.uber_eat_cloneapi1.service.UserService.AuthServiceImpl;
 import jakarta.mail.MessagingException;
@@ -11,8 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 
 @RestController
@@ -65,9 +66,9 @@ public class AuthController {
     }
 
     @PostMapping("verifyOTPAndLogin")
-    public ResponseEntity<?> verifyOTPAndLogin(@RequestBody OTPDTO OTPDTO) {
+    public ResponseEntity<?> verifyOTPAndLogin(@RequestBody OTPDTO OTPDTO, HttpServletRequest request) {
 
-            return authServiceImpl.verifyOTPAndLogin(OTPDTO);
+        return authServiceImpl.verifyOTPAndLogin(OTPDTO);
     }
 
 
@@ -78,9 +79,16 @@ public class AuthController {
 
 
     @PostMapping("logout")
-    public String logout() {
-        return "User logged out successfully.";
+    public ResponseEntity<?> logout(@RequestBody LogoutRequestDTO logoutRequestDTO) {
+        return authServiceImpl.logout(logoutRequestDTO);
     }
+
+    @PostMapping("refresh-jwttoken")
+    public ResponseEntity<?> refreshJWTtoken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        log.info("Refresh JWT token: {}", refreshTokenRequest);
+        return authServiceImpl.refreshJWTtoken(refreshTokenRequest);
+    }
+
 
     @PostMapping("resendOtpBySms")
     public ResponseEntity<?> resendOtpBySms(@RequestBody PhoneNumberDTO phoneNumberDTO) {
@@ -92,5 +100,7 @@ public class AuthController {
     public ResponseEntity<?> resendOtpByEmail(@RequestBody EmailDTO emailDTO) {
         return authServiceImpl.resendOtpByEmail(emailDTO);
     }
+
+
 
 }
