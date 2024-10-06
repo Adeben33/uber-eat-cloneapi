@@ -169,14 +169,15 @@ public class AuthServiceImpl {
     }
 
     public ResponseEntity<?> verifyOTPAndLogin(OTPDTO otpdto) {
-//        verify the otp
 
         Optional<UserModel> user = userRepo.findByEmailOrPhoneNumber(otpdto.getEmail(), otpdto.getPhoneNumber());
-
+        if (!user.isPresent()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("user not found");
+        }
 
 
         if (otpService.validateOTP(otpdto.getOtp(), user.get())) {
-            log.info(user.get().getPassword());
+
             try {
                 Authentication authentication = authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(user.get().getEmail(), otpdto.getOtp())
@@ -195,6 +196,9 @@ public class AuthServiceImpl {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Otp not valid");
     }
+
+
+
 }
 
 
