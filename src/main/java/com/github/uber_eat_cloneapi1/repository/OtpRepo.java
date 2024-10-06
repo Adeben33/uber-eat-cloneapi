@@ -14,7 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 @Repository
-public interface OtpRepo extends JpaRepository<OtpModel, Integer> {
+public interface OtpRepo extends JpaRepository<OtpModel, Long> {
     Optional<OtpModel> findByOtp(String otp);
 
     Optional<OtpModel> findByUser(UserModel user);

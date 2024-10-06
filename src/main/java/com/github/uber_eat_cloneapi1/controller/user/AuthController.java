@@ -77,30 +77,20 @@ public class AuthController {
     }
 
 
-    @PostMapping("/auth/logout")
+    @PostMapping("logout")
     public String logout() {
         return "User logged out successfully.";
     }
 
-//    TODO
-    @PostMapping("/auth/logout")
-    public String resendOtpBySms(@RequestBody PhoneNumberDTO phoneNumberDTO) {
+    @PostMapping("resendOtpBySms")
+    public ResponseEntity<?> resendOtpBySms(@RequestBody PhoneNumberDTO phoneNumberDTO) {
         return authServiceImpl.resendOtpBySms(phoneNumberDTO);
     }
 
 
-    @PostMapping("/auth/logout")
+    @PostMapping("resendOtpByEmail")
     public ResponseEntity<?> resendOtpByEmail(@RequestBody EmailDTO emailDTO) {
         return authServiceImpl.resendOtpByEmail(emailDTO);
-    }
-
-    private String getJWTFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);  // Extract the token part after "Bearer "
-        }
-        return null;
     }
 
 }

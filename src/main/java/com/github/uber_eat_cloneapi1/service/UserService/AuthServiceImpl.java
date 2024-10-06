@@ -1,14 +1,19 @@
 package com.github.uber_eat_cloneapi1.service.UserService;
 import com.github.uber_eat_cloneapi1.dto.request.*;
+import com.github.uber_eat_cloneapi1.dto.response.JWTResponse;
 import com.github.uber_eat_cloneapi1.models.OtpModel;
+import com.github.uber_eat_cloneapi1.models.RefreshTokenModel;
 import com.github.uber_eat_cloneapi1.models.RoleModel;
 import com.github.uber_eat_cloneapi1.models.UserModel;
 import com.github.uber_eat_cloneapi1.repository.OtpRepo;
+import com.github.uber_eat_cloneapi1.repository.RefreshTokenRepo;
 import com.github.uber_eat_cloneapi1.repository.RoleRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
 import com.github.uber_eat_cloneapi1.security.JwtGenerator;
 import com.github.uber_eat_cloneapi1.service.otpService.OtpService;
+import com.github.uber_eat_cloneapi1.service.refreshtoken.RefreshTokenService;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +43,7 @@ public class AuthServiceImpl {
 
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
     private final OtpRepo otpRepo;
+//    private final OtpRepo otpRepo;
 
     // Helper method for setting up headers with authorization
     private HttpHeaders createHeaders(String token) {
@@ -54,6 +60,8 @@ public class AuthServiceImpl {
     private final PasswordEncoder passwordEncoder;
     private final JwtGenerator jwtGenerator;
     private final OtpService otpService;
+    private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenRepo refreshTokenRepo;
 
 
     @Value("${app.sms.enabled}")
@@ -63,13 +71,15 @@ public class AuthServiceImpl {
     private boolean emailEnabled;
 
 
-    public AuthServiceImpl(UserRepo userRepo, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, JwtGenerator jwtGenerator, OtpService otpService, OtpRepo otpRepo) {
+    public AuthServiceImpl(UserRepo userRepo, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, JwtGenerator jwtGenerator, OtpService otpService, RefreshTokenService refreshTokenService, RefreshTokenRepo refreshTokenRepo, OtpRepo otpRepo) {
         this.userRepo = userRepo;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.jwtGenerator = jwtGenerator;
         this.otpService = otpService;
         this.otpRepo = otpRepo;
+        this.refreshTokenService = refreshTokenService;
+        this.refreshTokenRepo = refreshTokenRepo;
     }
 
     public ResponseEntity<?> registerOrSignup(RegisterOrLoginDTO registerOrLoginDTO) throws MessagingException {
@@ -83,12 +93,14 @@ public class AuthServiceImpl {
         // If user exists, generate and send OTP
         if (user.isPresent()) {
             String token = generateAndSendOtp(user.get());
+
             return ResponseEntity.ok().body(List.of(user.get(), "User login successful"));
         } else {
             // Create a new user
-
             UserModel newUser = createUser(registerOrLoginDTO);
+
             String token = generateAndSendOtp(newUser);
+
             return ResponseEntity.ok().body(List.of(newUser, "User registered successfully"));
         }
     }
@@ -154,21 +166,6 @@ public class AuthServiceImpl {
         return newUser;
     }
 
-//    private String generateAndSendOtp(UserModel user) throws MessagingException {
-//        Long tokenKey = 233454L;
-//        String token = otpService.generateOTP(tokenKey, user);
-//
-//        if (smsEnabled && user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
-//            otpService.sendOtpSMS1(user.getPhoneNumber(), token);
-//        } else if (emailEnabled && user.getEmail() != null && !user.getEmail().isEmpty()) {
-//            String name = user.getFirstname() == null ? "Welcome back" : user.getFirstname();
-//            otpService.sendOtpEmail(user.getEmail(), name, token);
-//        } else {
-//            throw new IllegalArgumentException("User must have either a phone number or an email.");
-//        }
-//        return token;
-//    }
-
     public ResponseEntity<?> verifyOTPAndLogin(OTPDTO otpdto) {
 
         Optional<UserModel> user = userRepo.findByEmailOrPhoneNumber(otpdto.getEmail(), otpdto.getPhoneNumber());
@@ -178,7 +175,6 @@ public class AuthServiceImpl {
 
 
         if (otpService.validateOTP(otpdto.getOtp(), user.get())) {
-
             try {
                 Authentication authentication = authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(user.get().getEmail(), otpdto.getOtp())
@@ -188,7 +184,11 @@ public class AuthServiceImpl {
 
                 String token = jwtGenerator.generateToken(authentication);
 
-                return ResponseEntity.ok().headers(createHeaders(token)).body(List.of("Login Successful", token));
+                String refreshToken = refreshTokenService.createRefreshToken(authentication.getName());
+
+
+
+                return ResponseEntity.ok().headers(createHeaders(token)).body(new JWTResponse(token, refreshToken) );
             } catch (AuthenticationException e) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid login credentials");
             }
@@ -236,14 +236,15 @@ public class AuthServiceImpl {
     }
 
 
-    public ResponseEntity<?> resendOtpByEmail(EmailDTO emailDTO)  {
+    public ResponseEntity<?> resendOtpByEmail(EmailDTO emailDTO)   {
 
         UserModel user = userRepo.findByEmail(emailDTO.getEmail()).get();
         if (userRepo.findByEmail(emailDTO.getEmail()).isEmpty()){
             return ResponseEntity.badRequest().body("user cannot be found");
         };
 
-        Optional<OtpModel> otp = otpRepo.findOtpByEmailOrPhoneNumber(emailDTO.getEmail());
+        Optional<OtpModel> otp =  otpRepo.findOtpByEmailOrPhoneNumber(emailDTO.getEmail());
+
         if (otp.isEmpty()) {
 //            create a new otp
             try {
@@ -285,7 +286,7 @@ public class AuthServiceImpl {
         if (otp.isEmpty()) {
 //            create a new otp
             try {
-                generateAndSendOtpByEmail(user);
+                generateAndSendOtpByPhoneNumber(user);
                 ResponseEntity.ok().body("Otp generated and sent to email successfully");
             } catch (MessagingException e) {
                 ResponseEntity.badRequest().body(e.getMessage());
@@ -298,13 +299,12 @@ public class AuthServiceImpl {
                     ResponseEntity.ok().body("Otp generated and sent to email successfully");
 
                 } catch (MessagingException e) {
-
                     ResponseEntity.badRequest().body(e.getMessage());
                 }
             }else {
                 try {
                     generateAndSendOtpByPhoneNumber(user);
-                    ResponseEntity.ok().body("Otp generated and sent to email successfully");
+                    ResponseEntity.ok().body("Otp generated and sent to phone number successfully");
                 } catch (MessagingException e) {
                     ResponseEntity.badRequest().body(e.getMessage());
                 }

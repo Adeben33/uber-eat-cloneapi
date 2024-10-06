@@ -86,4 +86,22 @@ public class JwtGenerator {
         }
     }
 
+    public boolean inValidateToken(String token){
+        log.debug("InValidating JWT token: {}", token);
+
+        try {
+            Jwts.parser().setSigningKey(jwtSecretKey).build().parseClaimsJws(token);
+            return true;
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            log.error("Invalid JWT signature: {}", e.getMessage());
+            throw new AuthenticationCredentialsNotFoundException("JWT signature is invalid");
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            log.error("JWT token is expired: {}", e.getMessage());
+            throw new AuthenticationCredentialsNotFoundException("JWT token has expired");
+        } catch (Exception e) {
+            log.error("JWT validation failed: {}", e.getMessage());
+            throw new AuthenticationCredentialsNotFoundException("JWT was expired or incorrect");
+        }
+    }
+
 }
