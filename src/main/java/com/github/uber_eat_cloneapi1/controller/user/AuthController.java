@@ -1,12 +1,6 @@
 package com.github.uber_eat_cloneapi1.controller.user;
 
-import com.github.uber_eat_cloneapi1.dto.request.LoginDTO;
-import com.github.uber_eat_cloneapi1.dto.request.OTPDTO;
-import com.github.uber_eat_cloneapi1.dto.request.RegisterOrLoginDTO;
-import com.github.uber_eat_cloneapi1.models.RoleModel;
-import com.github.uber_eat_cloneapi1.models.UserModel;
-import com.github.uber_eat_cloneapi1.dto.request.RegisterDTO;
-import com.github.uber_eat_cloneapi1.repository.UserRepo;
+import com.github.uber_eat_cloneapi1.dto.request.*;
 import com.github.uber_eat_cloneapi1.security.JwtGenerator;
 import com.github.uber_eat_cloneapi1.service.UserService.AuthServiceImpl;
 import jakarta.mail.MessagingException;
@@ -16,11 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,36 +70,6 @@ public class AuthController {
             return authServiceImpl.verifyOTPAndLogin(OTPDTO);
     }
 
-    public boolean validLogin(UserDetails userDetails) {
-        // Check if the user account is enabled
-        if (!userDetails.isEnabled()) {
-            System.out.println("User account is disabled.");
-            return false;
-        }
-
-        // Check if the user's account is not expired
-        if (!userDetails.isAccountNonExpired()) {
-            System.out.println("User account has expired.");
-            return false;
-        }
-
-        // Check if the user's credentials are still valid (e.g., password expiration)
-        if (!userDetails.isCredentialsNonExpired()) {
-            System.out.println("User credentials have expired.");
-            return false;
-        }
-
-        // Check if the user's account is not locked
-        if (!userDetails.isAccountNonLocked()) {
-            System.out.println("User account is locked.");
-            return false;
-        }
-
-        // If all checks pass, the login is valid
-        return true;
-    }
-
-
 
     @PostMapping("login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO){
@@ -117,11 +77,21 @@ public class AuthController {
     }
 
 
-
-
     @PostMapping("/auth/logout")
     public String logout() {
         return "User logged out successfully.";
+    }
+
+//    TODO
+    @PostMapping("/auth/logout")
+    public String resendOtpBySms(@RequestBody PhoneNumberDTO phoneNumberDTO) {
+        return authServiceImpl.resendOtpBySms(phoneNumberDTO);
+    }
+
+
+    @PostMapping("/auth/logout")
+    public ResponseEntity<?> resendOtpByEmail(@RequestBody EmailDTO emailDTO) {
+        return authServiceImpl.resendOtpByEmail(emailDTO);
     }
 
     private String getJWTFromRequest(HttpServletRequest request) {

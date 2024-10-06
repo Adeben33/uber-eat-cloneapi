@@ -1,9 +1,9 @@
 package com.github.uber_eat_cloneapi1.service.UserService;
-import com.github.uber_eat_cloneapi1.dto.request.LoginDTO;
-import com.github.uber_eat_cloneapi1.dto.request.OTPDTO;
-import com.github.uber_eat_cloneapi1.dto.request.RegisterOrLoginDTO;
+import com.github.uber_eat_cloneapi1.dto.request.*;
+import com.github.uber_eat_cloneapi1.models.OtpModel;
 import com.github.uber_eat_cloneapi1.models.RoleModel;
 import com.github.uber_eat_cloneapi1.models.UserModel;
+import com.github.uber_eat_cloneapi1.repository.OtpRepo;
 import com.github.uber_eat_cloneapi1.repository.RoleRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
 import com.github.uber_eat_cloneapi1.security.JwtGenerator;
@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import com.github.uber_eat_cloneapi1.dto.request.RegisterDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,6 +37,7 @@ import java.util.Optional;
 public class AuthServiceImpl {
 
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
+    private final OtpRepo otpRepo;
 
     // Helper method for setting up headers with authorization
     private HttpHeaders createHeaders(String token) {
@@ -63,12 +63,13 @@ public class AuthServiceImpl {
     private boolean emailEnabled;
 
 
-    public AuthServiceImpl(UserRepo userRepo, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, JwtGenerator jwtGenerator, OtpService otpService) {
+    public AuthServiceImpl(UserRepo userRepo, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder, JwtGenerator jwtGenerator, OtpService otpService, OtpRepo otpRepo) {
         this.userRepo = userRepo;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.jwtGenerator = jwtGenerator;
         this.otpService = otpService;
+        this.otpRepo = otpRepo;
     }
 
     public ResponseEntity<?> registerOrSignup(RegisterOrLoginDTO registerOrLoginDTO) throws MessagingException {
@@ -153,20 +154,20 @@ public class AuthServiceImpl {
         return newUser;
     }
 
-    private String generateAndSendOtp(UserModel user) throws MessagingException {
-        Long tokenKey = 233454L;
-        String token = otpService.generateOTP(tokenKey, user);
-
-        if (smsEnabled && user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
-            otpService.sendOtpSMS1(user.getPhoneNumber(), token);
-        } else if (emailEnabled && user.getEmail() != null && !user.getEmail().isEmpty()) {
-            String name = user.getFirstname() == null ? "Welcome back" : user.getFirstname();
-            otpService.sendOtpEmail(user.getEmail(), name, token);
-        } else {
-            throw new IllegalArgumentException("User must have either a phone number or an email.");
-        }
-        return token;
-    }
+//    private String generateAndSendOtp(UserModel user) throws MessagingException {
+//        Long tokenKey = 233454L;
+//        String token = otpService.generateOTP(tokenKey, user);
+//
+//        if (smsEnabled && user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
+//            otpService.sendOtpSMS1(user.getPhoneNumber(), token);
+//        } else if (emailEnabled && user.getEmail() != null && !user.getEmail().isEmpty()) {
+//            String name = user.getFirstname() == null ? "Welcome back" : user.getFirstname();
+//            otpService.sendOtpEmail(user.getEmail(), name, token);
+//        } else {
+//            throw new IllegalArgumentException("User must have either a phone number or an email.");
+//        }
+//        return token;
+//    }
 
     public ResponseEntity<?> verifyOTPAndLogin(OTPDTO otpdto) {
 
@@ -197,8 +198,120 @@ public class AuthServiceImpl {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Otp not valid");
     }
 
+    private String generateAndSendOtpByEmail(UserModel user) throws MessagingException {
+        if (emailEnabled && user.getEmail() != null && !user.getEmail().isEmpty()) {
+            Long tokenKey = 233454L;
+            String token = otpService.generateOTP(tokenKey, user);
+
+            String name = user.getFirstname() == null ? "Welcome back" : user.getFirstname();
+            otpService.sendOtpEmail(user.getEmail(), name, token);
+
+            return token;  // Return the generated OTP
+        } else {
+            throw new IllegalArgumentException("Email service is not enabled or user does not have a valid email.");
+        }
+    }
+
+    private String generateAndSendOtpByPhoneNumber(UserModel user) throws MessagingException {
+        if (smsEnabled && user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
+            Long tokenKey = 233454L;
+            String token = otpService.generateOTP(tokenKey, user);
+
+            otpService.sendOtpSMS1(user.getPhoneNumber(), token);
+
+            return token;  // Return the generated OTP
+        } else {
+            throw new IllegalArgumentException("Phone service is not enabled or user does not have a valid phone number.");
+        }
+    }
+
+    private String generateAndSendOtp(UserModel user) throws MessagingException {
+        if (smsEnabled && user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
+            return generateAndSendOtpByPhoneNumber(user);
+        } else if (emailEnabled && user.getEmail() != null && !user.getEmail().isEmpty()) {
+            return generateAndSendOtpByEmail(user);
+        } else {
+            throw new IllegalArgumentException("User must have either a valid phone number or an email.");
+        }
+    }
 
 
+    public ResponseEntity<?> resendOtpByEmail(EmailDTO emailDTO)  {
+
+        UserModel user = userRepo.findByEmail(emailDTO.getEmail()).get();
+        if (userRepo.findByEmail(emailDTO.getEmail()).isEmpty()){
+            return ResponseEntity.badRequest().body("user cannot be found");
+        };
+
+        Optional<OtpModel> otp = otpRepo.findOtpByEmailOrPhoneNumber(emailDTO.getEmail());
+        if (otp.isEmpty()) {
+//            create a new otp
+            try {
+                generateAndSendOtpByEmail(user);
+                ResponseEntity.ok().body("Otp generated and sent to email successfully");
+            } catch (MessagingException e) {
+                ResponseEntity.badRequest().body(e.getMessage());
+            }
+        } else {
+            if(otpService.validateOTP(otp.get().getOtp(),user)){
+               try {
+                   otpService.sendOtpEmail(user.getEmail(),user.getFirstname(),otp.get().getOtp());
+                   ResponseEntity.ok().body("Otp generated and sent to email successfully");
+               } catch (MessagingException e) {
+
+                   ResponseEntity.badRequest().body(e.getMessage());
+               }
+            }else {
+                try {
+                    generateAndSendOtpByEmail(user);
+                    ResponseEntity.ok().body("Otp generated and sent to email successfully");
+                } catch (MessagingException e) {
+                    ResponseEntity.badRequest().body(e.getMessage());
+                }
+            };
+        }
+        return ResponseEntity.badRequest().body("Otp not generated");
+    }
+
+    public ResponseEntity<String> resendOtpBySms(PhoneNumberDTO phoneNumberDTO) {
+
+        UserModel user = userRepo.findByEmail(phoneNumberDTO.getPhoneNumber()).get();
+
+        if (userRepo.findByEmail(phoneNumberDTO.getPhoneNumber()).isEmpty()){
+            return ResponseEntity.badRequest().body("user cannot be found");
+        };
+
+        Optional<OtpModel> otp = otpRepo.findOtpByEmailOrPhoneNumber(phoneNumberDTO.getPhoneNumber());
+        if (otp.isEmpty()) {
+//            create a new otp
+            try {
+                generateAndSendOtpByEmail(user);
+                ResponseEntity.ok().body("Otp generated and sent to email successfully");
+            } catch (MessagingException e) {
+                ResponseEntity.badRequest().body(e.getMessage());
+            }
+        } else {
+            if(otpService.validateOTP(otp.get().getOtp(),user)){
+                try {
+                    otpService.sendOtpSMS(phoneNumberDTO.getPhoneNumber(),otp.get().getOtp());
+
+                    ResponseEntity.ok().body("Otp generated and sent to email successfully");
+
+                } catch (MessagingException e) {
+
+                    ResponseEntity.badRequest().body(e.getMessage());
+                }
+            }else {
+                try {
+                    generateAndSendOtpByPhoneNumber(user);
+                    ResponseEntity.ok().body("Otp generated and sent to email successfully");
+                } catch (MessagingException e) {
+                    ResponseEntity.badRequest().body(e.getMessage());
+                }
+            };
+        }
+        return ResponseEntity.badRequest().body("Otp not generated");
+    }
 }
 
 
