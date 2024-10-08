@@ -25,14 +25,14 @@ public class AdminRestaurantController {
     }
 
     @PutMapping("/restaurants/{userid}/{restaurantId}")
-    public ResponseEntity<?> updateRestaurant(@PathVariable String restaurantId, String userId, @RequestBody RestaurantUpdateDTO restaurantUpdateDTO) {
+    public ResponseEntity<?> updateRestaurant(@PathVariable String restaurantId, @PathVariable String userid, @RequestBody RestaurantUpdateDTO restaurantUpdateDTO) {
 //         "Restaurant information updated for ID: " + restaurantId;
-        return adminRestaurantService.updateRestaurant(restaurantId,userId,restaurantUpdateDTO);
+        return adminRestaurantService.updateRestaurant(restaurantId,userid,restaurantUpdateDTO);
     }
 
-    @DeleteMapping("/restaurants/{restaurantId}")
-    public String deleteRestaurant(@PathVariable String restaurantId) {
-        return "Restaurant with ID: " + restaurantId + " has been deleted.";
+    @DeleteMapping("/restaurants/{userId}/{restaurantId}/{otpInput}")
+    public ResponseEntity<String> deleteRestaurant(@PathVariable String restaurantId, @PathVariable String userId, @PathVariable String otpInput) {
+        return adminRestaurantService.deleteRestaurant(restaurantId,userId,otpInput);
     }
 
     @PostMapping("/restaurants/{restaurantId}/menu")

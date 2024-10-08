@@ -7,6 +7,8 @@ import com.github.uber_eat_cloneapi1.models.RestaurantModel;
 import com.github.uber_eat_cloneapi1.models.UserModel;
 import com.github.uber_eat_cloneapi1.repository.RestaurantRepo;
 import com.github.uber_eat_cloneapi1.repository.UserRepo;
+import com.github.uber_eat_cloneapi1.service.otpService.OtpService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,7 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,10 +25,13 @@ public class AdminRestaurantService {
 
     private final RestaurantRepo restaurantRepo;
     private final UserRepo userRepo;
+    private final OtpService otpService;
 
-    public AdminRestaurantService(RestaurantRepo restaurantRepo, UserRepo userRepo) {
+    @Autowired
+    public AdminRestaurantService(RestaurantRepo restaurantRepo, UserRepo userRepo, OtpService otpService) {
         this.restaurantRepo = restaurantRepo;
         this.userRepo = userRepo;
+        this.otpService = otpService;
     }
 
     public ResponseEntity<?> createRestaurant(RestaurantDTO restaurantDTO, String userId) {
@@ -105,5 +109,29 @@ public class AdminRestaurantService {
 
         return ResponseEntity.badRequest().body("User is not authenticated or you are not an admin or no restaurant with that id");
 
+    }
+
+
+    public ResponseEntity<String> deleteRestaurant(String restaurantId, String userId, String otpInput) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        Optional<UserModel> userById = userRepo.findById(Long.parseLong(userId));
+
+        if(userById.isEmpty()) {
+            return ResponseEntity.badRequest().body("User is does not exist");
+        }
+
+        Optional<RestaurantModel> restuarant = restaurantRepo.findById(Long.parseLong(restaurantId));
+
+        if ((auth != null && auth.isAuthenticated() && restuarant.isPresent()) && (auth.getPrincipal() instanceof UserDetails userDetails) && otpService.validateOTP(otpInput, userById.get())) {
+
+            String email = userDetails.getUsername();
+            if (Objects.equals(email, restuarant.get().getUser().getEmail())) {
+                restaurantRepo.deleteById(Long.parseLong(restaurantId));
+                return ResponseEntity.ok().body("restaurant successfully deleted");
+            }
+        }
+
+        return ResponseEntity.badRequest().body("User is not authenticated or you are not an admin or no restaurant with that id");
     }
 }
