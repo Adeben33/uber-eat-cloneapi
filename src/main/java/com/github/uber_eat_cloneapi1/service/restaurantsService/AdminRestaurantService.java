@@ -45,24 +45,24 @@ public class AdminRestaurantService {
             if (principal instanceof UserDetails userDetails) {
                 String email = userDetails.getUsername();
 
-                if((Objects.equals(email, userById.get().getEmail())) && (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")))){
+                if ((Objects.equals(email, userById.get().getEmail())) && (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")))) {
 
 
-                   RestaurantModel restaurant = RestaurantModel.builder()
-                           .name(restaurantDTO.getName())
-                           .address(restaurantDTO.getAddress())
-                           .cuisineType(restaurantDTO.getCuisineType())
-                           .phoneNumber(restaurantDTO.getPhone())
-                           .build();
+                    RestaurantModel restaurant = RestaurantModel.builder()
+                            .name(restaurantDTO.getName())
+                            .address(restaurantDTO.getAddress())
+                            .cuisineType(restaurantDTO.getCuisineType())
+                            .phoneNumber(restaurantDTO.getPhone())
+                            .build();
 
                     RestaurantModel savRestaurant = restaurantRepo.save(restaurant);
 
                     return new ResponseEntity<>(savRestaurant, HttpStatus.CREATED);
 
-                }else{
+                } else {
                     return ResponseEntity.badRequest().body("user cannot create a restaurant because you are not an admin");
                 }
-             
+
             }
         }
 
@@ -72,6 +72,38 @@ public class AdminRestaurantService {
     }
 
 
-    public String updateRestaurant(String restaurantId, String userId, RestaurantUpdateDTO restaurantUpdateDTO) {
+    public ResponseEntity<?> updateRestaurant(String restaurantId, String userId, RestaurantUpdateDTO restaurantUpdateDTO) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+//        Optional<UserModel> userById = userRepo.findById(Long.parseLong(userId));
+
+        Optional<RestaurantModel> restuarant = restaurantRepo.findById(Long.parseLong(restaurantId));
+
+        if ((auth != null && auth.isAuthenticated() && restuarant.isPresent()) && (auth.getPrincipal() instanceof UserDetails userDetails)) {
+
+            String email = userDetails.getUsername();
+
+            if (Objects.equals(email, restuarant.get().getUser().getEmail())) {
+
+                RestaurantModel updatedRestaurant = restuarant.get();
+
+                updatedRestaurant.setAddress(restaurantUpdateDTO.getAddress());
+                updatedRestaurant.setAvailable(restaurantUpdateDTO.getAvailable());
+                updatedRestaurant.setName(restaurantUpdateDTO.getName());
+                updatedRestaurant.setDeliveryOption(restaurantUpdateDTO.getDeliveryOption());
+                updatedRestaurant.setOperatingHours(restaurantUpdateDTO.getOperatingHours());
+
+                restaurantRepo.save(updatedRestaurant);
+
+                return ResponseEntity.ok().body("restaurant successufully created");
+
+
+            }
+
+        }
+
+        return ResponseEntity.badRequest().body("User is not authenticated or you are not an admin or no restaurant with that id");
+
     }
 }

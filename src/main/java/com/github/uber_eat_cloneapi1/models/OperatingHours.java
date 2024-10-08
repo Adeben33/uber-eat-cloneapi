@@ -4,7 +4,6 @@ import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class OperatingHours {
-
     private String openingTime;
     private String closingTime;
 }

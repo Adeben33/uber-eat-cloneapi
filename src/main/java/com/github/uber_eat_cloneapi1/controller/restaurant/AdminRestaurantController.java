@@ -1,6 +1,7 @@
 package com.github.uber_eat_cloneapi1.controller.restaurant;
 
 import com.github.uber_eat_cloneapi1.dto.request.*;
+import com.github.uber_eat_cloneapi1.models.OperatingHours;
 import com.github.uber_eat_cloneapi1.service.restaurantsService.AdminRestaurantService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +25,7 @@ public class AdminRestaurantController {
     }
 
     @PutMapping("/restaurants/{userid}/{restaurantId}")
-    public String updateRestaurant(@PathVariable String restaurantId,String userId, @RequestBody RestaurantUpdateDTO restaurantUpdateDTO) {
+    public ResponseEntity<?> updateRestaurant(@PathVariable String restaurantId, String userId, @RequestBody RestaurantUpdateDTO restaurantUpdateDTO) {
 //         "Restaurant information updated for ID: " + restaurantId;
         return adminRestaurantService.updateRestaurant(restaurantId,userId,restaurantUpdateDTO);
     }
@@ -50,7 +51,7 @@ public class AdminRestaurantController {
     }
 
     @PostMapping("/restaurants/{restaurantId}/operating-hours")
-    public String setRestaurantOperatingHours(@PathVariable String restaurantId, @RequestBody OperatingHoursDTO operatingHoursDTO) {
+    public String setRestaurantOperatingHours(@PathVariable String restaurantId, @RequestBody OperatingHours operatingHoursDTO) {
         return "Operating hours set for restaurant with ID: " + restaurantId;
     }
 
