@@ -23,9 +23,10 @@ public class AdminRestaurantController {
         return adminRestaurantService.createRestaurant(restaurantDTO,userid);
     }
 
-    @PutMapping("/restaurants/{restaurantId}")
-    public String updateRestaurant(@PathVariable String restaurantId, @RequestBody RestaurantUpdateDTO restaurantUpdateDTO) {
-        return "Restaurant information updated for ID: " + restaurantId;
+    @PutMapping("/restaurants/{userid}/{restaurantId}")
+    public String updateRestaurant(@PathVariable String restaurantId,String userId, @RequestBody RestaurantUpdateDTO restaurantUpdateDTO) {
+//         "Restaurant information updated for ID: " + restaurantId;
+        return adminRestaurantService.updateRestaurant(restaurantId,userId,restaurantUpdateDTO);
     }
 
     @DeleteMapping("/restaurants/{restaurantId}")

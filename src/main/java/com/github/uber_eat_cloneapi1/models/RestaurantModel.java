@@ -62,4 +62,9 @@ public class RestaurantModel {
 
     // Availability status (online/offline)
     private boolean isAvailable;
+
+//    user
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private UserModel user;
 }
