@@ -5,8 +5,7 @@ import com.github.uber_eat_cloneapi1.dto.request.UserProfileDTO;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-
-@RequestMapping("/api/v1/user")
+//@RequestMapping("/api/v1/user")
 public class UserController {
 
 

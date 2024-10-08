@@ -51,9 +51,9 @@ public class User {
     }
 
 
-    @GetMapping("/restaurants/{restaurantId}/menu")
-    public String getAllMenuItems(@PathVariable String restaurantId) {
-        return "List of menu items for restaurant with ID: " + restaurantId;
-    }
+//    @GetMapping("/restaurants/{restaurantId}/menu")
+//    public String getAllMenuItems(@PathVariable String restaurantId) {
+//        return "List of menu items for restaurant with ID: " + restaurantId;
+//    }
 
 }

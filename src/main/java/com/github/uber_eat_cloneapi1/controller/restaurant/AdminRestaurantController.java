@@ -1,18 +1,26 @@
 package com.github.uber_eat_cloneapi1.controller.restaurant;
 
 import com.github.uber_eat_cloneapi1.dto.request.*;
+import com.github.uber_eat_cloneapi1.service.restaurantsService.AdminRestaurantService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
 //an Admin is also a USER
 @RestController
-@PreAuthorize("hasRole('ROLE_Admin')")
-public class Admin {
+@PreAuthorize("hasRole('ROLE_ADMIN')")
+public class AdminRestaurantController {
 
-    @PostMapping("/restaurants")
-    public String createRestaurant(@RequestBody RestaurantDTO restaurantDTO) {
-        return "Restaurant created successfully with name: " + restaurantDTO.getName();
+    private final AdminRestaurantService adminRestaurantService;
+
+    public AdminRestaurantController(AdminRestaurantService adminRestaurantService) {
+        this.adminRestaurantService = adminRestaurantService;
+    }
+
+    @PostMapping("/restaurants/{userid}")
+    public ResponseEntity<?> createRestaurant(@RequestBody RestaurantDTO restaurantDTO, @PathVariable String userid) {
+        return adminRestaurantService.createRestaurant(restaurantDTO,userid);
     }
 
     @PutMapping("/restaurants/{restaurantId}")
